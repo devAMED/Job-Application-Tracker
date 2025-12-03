@@ -11,7 +11,7 @@ export default function RegisterPage() {
     name: "",
     email: "",
     password: "",
-    // role: "user", // you can add a role dropdown later for admin creation
+    // role: "user"
   });
 
   const [error, setError] = useState("");
@@ -92,21 +92,6 @@ export default function RegisterPage() {
             />
           </label>
         </div>
-
-        {/* Optional later:
-        <div style={{ marginBottom: "0.5rem" }}>
-          <label>
-            Role<br />
-            <select
-              name="role"
-              value={form.role}
-              onChange={handleChange}
-            >
-              <option value="user">User</option>
-              <option value="admin">Admin</option>
-            </select>
-          </label>
-        </div> */}
 
         {error && <p style={{ color: "red" }}>{error}</p>}
 

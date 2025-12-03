@@ -2,9 +2,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Navbar() {
+  //get auth info from context
   const { isAuthenticated, role, user, logout } = useAuth();
   const navigate = useNavigate();
-
+// When user clicks "Logout", clear auth and go back to login page
   const handleLogout = () => {
     logout();
     navigate("/login");
@@ -31,18 +32,20 @@ export default function Navbar() {
               : "/login"
           }
         >
+          {/* Left side: logo / app name */}
           <strong>Job Application Tracker</strong>
         </Link>
       </div>
 
       <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+        {/* If not logged in, show Login/Register links */}
         {!isAuthenticated && (
           <>
             <Link to="/login">Login</Link>
             <Link to="/register">Register</Link>
           </>
         )}
-
+        {/* If admin is logged in, show admin links */}
         {isAuthenticated && role === "admin" && (
           <>
             <Link to="/admin/jobs">Jobs</Link>

@@ -1,26 +1,29 @@
 // client/src/App.jsx
+//main app shell with navbar, routing, etc
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext.jsx";
 import Navbar from "./components/Navbar.jsx";
-
+//auth pages
 import LoginPage from "./pages/LoginPage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
-
+//admin
 import AdminJobsPage from "./pages/AdminJobsPage.jsx";
 import AdminApplicationsPage from "./pages/AdminApplicationsPage.jsx";
+//user
 import UserJobsPage from "./pages/UserJobsPage.jsx";
 import UserApplicationsPage from "./pages/UserApplicationsPage.jsx";
 
-
+//protext the routes so only logged in users can access
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
-
+//while restoring from localstorage, show a temp message
   if (loading) return <p>Loading...</p>;
+  //if not logged in, send to login page
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-
+//if logged in render the requested page
   return children;
 };
-
+//this restricts certain routes to specific roles
 const RoleRoute = ({ allowedRoles, children }) => {
   const { role } = useAuth();
 
@@ -30,7 +33,7 @@ const RoleRoute = ({ allowedRoles, children }) => {
     if (role === "user") return <Navigate to="/user/jobs" replace />;
     return <Navigate to="/login" replace />;
   }
-
+//role is allowed render the page
   return children;
 };
 

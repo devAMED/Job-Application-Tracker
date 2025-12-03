@@ -1,42 +1,125 @@
+/* client/src/App.css */
+
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  min-height: 100vh;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* App shell layout */
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* We already set maxWidth/padding inline in App.jsx for <main>,
+   so here we just complement global layout if needed */
+.app-main {
+  flex: 1;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+/* Generic page wrapper */
+.page {
+  margin-top: 1.5rem;
 }
 
+/* Headings on pages like Login, Register, Admin/User pages */
+.page h2 {
+  font-size: 1.3rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Card-style container for forms and content */
 .card {
-  padding: 2em;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  padding: 1.5rem 1.7rem;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+  border: 1px solid #e5e7eb;
 }
 
-.read-the-docs {
-  color: #888;
+/* Form spacing */
+form {
+  display: block;
+  margin-top: 0.75rem;
+}
+
+form > div {
+  margin-bottom: 0.7rem;
+}
+
+/* Labels */
+label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #374151; /* gray-700 */
+}
+
+/* Error text (like login/register errors) */
+.error-text {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: #dc2626; /* red-600 */
+}
+
+/* Tables (JobList & ApplicationList) */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+}
+
+th,
+td {
+  padding: 0.7rem 0.9rem;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+thead {
+  background: linear-gradient(90deg, #eff6ff, #eef2ff);
+}
+
+th {
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+tbody tr:nth-of-type(even) {
+  background-color: #f9fafb;
+}
+
+tbody tr:hover {
+  background-color: #eef2ff;
+}
+
+/* Small buttons inside tables */
+table button {
+  font-size: 0.75rem;
+  padding: 0.35rem 0.7rem;
+  margin-right: 0.35rem;
+}
+
+/* Status text in ApplicationList (capitalize already handled inline) */
+.status-text {
+  font-weight: 500;
+  font-size: 0.8rem;
+}
+
+/* Helper spacing for page titles + description */
+.page-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.page-subtitle {
+  font-size: 0.85rem;
+  color: #6b7280; /* gray-500 */
 }

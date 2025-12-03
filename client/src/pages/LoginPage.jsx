@@ -6,25 +6,25 @@ import { loginUser } from "../api/authApi.js";
 export default function LoginPage() {
   const { login, isAuthenticated, role } = useAuth();
   const navigate = useNavigate();
-
+// Form state: controlled inputs for email + password
   const [form, setForm] = useState({
     email: "",
     password: "",
   });
-
+// Form state: controlled inputs for email + password
   const [error, setError] = useState("");
-
+//if already logged in, dont show the form again then redirect to admin or user page
   if (isAuthenticated) {
     return <Navigate to={role === "admin" ? "/admin/jobs" : "/user/jobs"} replace />;
   }
-
+//update form state when user types
   const handleChange = (e) => {
     setForm((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
     }));
   };
-
+//handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
