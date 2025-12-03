@@ -47,40 +47,69 @@ export default function LoginPage() {
   };
 
   return (
-    <div>
-      <h2>Login</h2>
+    // Outer container: fill viewport under navbar and center the card
+    <div
+      style={{
+        minHeight: "calc(100vh - 80px)", // adjust for navbar height
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "2.5rem 1.25rem",
+      }}
+    >
+      {/* Card container */}
+      <div
+        style={{
+          backgroundColor: "#ffffff",
+          borderRadius: "1.2rem",
+          padding: "2.1rem 2.3rem",
+          boxShadow: "0 22px 50px rgba(15, 23, 42, 0.16)",
+          border: "1px solid #e5e7eb",
+          width: "100%",
+          maxWidth: "500px", // bigger card
+        }}
+      >
+        <h2 style={{ marginBottom: "0.9rem" }}>Login</h2>
+        <p style={{ fontSize: "0.9rem", marginBottom: "0.75rem", color: "#6b7280" }}>
+          Sign in to manage and track your job applications.
+        </p>
 
-      <form onSubmit={handleSubmit} style={{ maxWidth: "400px" }}>
-        <div style={{ marginBottom: "0.5rem" }}>
-          <label>
-            Email<br />
-            <input
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              required
-            />
-          </label>
-        </div>
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: "0.75rem" }}>
+            <label>
+              Email
+              <br />
+              <input
+                type="email"
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+                required
+              />
+            </label>
+          </div>
 
-        <div style={{ marginBottom: "0.5rem" }}>
-          <label>
-            Password<br />
-            <input
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              required
-            />
-          </label>
-        </div>
+          <div style={{ marginBottom: "0.75rem" }}>
+            <label>
+              Password
+              <br />
+              <input
+                type="password"
+                name="password"
+                value={form.password}
+                onChange={handleChange}
+                required
+              />
+            </label>
+          </div>
 
-        {error && <p style={{ color: "red" }}>{error}</p>}
+          {error && <p style={{ color: "red", marginTop: "0.25rem" }}>{error}</p>}
 
-        <button type="submit">Login</button>
-      </form>
+          <button type="submit" style={{ marginTop: "0.75rem" }}>
+            Login
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
