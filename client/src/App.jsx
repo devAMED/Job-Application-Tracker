@@ -6,15 +6,11 @@ import Navbar from "./components/Navbar.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
 
-// Temporary placeholder components for teammate 3
-const AdminJobsPage = () => <h2>Admin Jobs – to be implemented</h2>;
-const AdminApplicationsPage = () => (
-  <h2>Admin Applications – to be implemented</h2>
-);
-const UserJobsPage = () => <h2>User Jobs – to be implemented</h2>;
-const UserApplicationsPage = () => (
-  <h2>My Applications – to be implemented</h2>
-);
+import AdminJobsPage from "./pages/AdminJobsPage.jsx";
+import AdminApplicationsPage from "./pages/AdminApplicationsPage.jsx";
+import UserJobsPage from "./pages/UserJobsPage.jsx";
+import UserApplicationsPage from "./pages/UserApplicationsPage.jsx";
+
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
