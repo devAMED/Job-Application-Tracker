@@ -17,6 +17,7 @@ export const AuthProvider = ({ children }) => {
 
     if (savedUser && savedToken && savedRole) {
       //if all exists, then parse and restore them into state
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUser(JSON.parse(savedUser));
       setToken(savedToken);
       setRole(savedRole);
@@ -58,4 +59,5 @@ export const AuthProvider = ({ children }) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => useContext(AuthContext);

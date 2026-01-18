@@ -3,29 +3,48 @@ const Application = require("../models/Application");
 const Job = require("../models/Job");
 const authMiddleware = require("../middleware/auth.middleware");
 const adminOnly = require("../middleware/role.middleware");
+const upload = require("../config/upload"); // Import the new upload config
 
 const router = express.Router();
 
 /**
  * APPLY TO A JOB (User)
  * POST /api/applications/:jobId
+ * Expects: multipart/form-data with fields: fullName, phone, linkedin, extraNotes, cv (file)
  */
-router.post("/:jobId", authMiddleware, async (req, res) => {
+router.post("/:jobId", authMiddleware, upload.single("cv"), async (req, res) => {
   try {
     const { jobId } = req.params;
-    const { notes } = req.body;
+    
+    // 1. Check if file was uploaded
+    if (!req.file) {
+      return res.status(400).json({ message: "CV file is required" });
+    }
 
-    // Check if job exists
+    // 2. Extract text fields from body (FormData converts them to strings)
+    const { fullName, phone, linkedin, extraNotes } = req.body;
+
+    // 3. Check if job exists
     const job = await Job.findById(jobId);
     if (!job) {
       return res.status(404).json({ message: "Job not found" });
     }
 
-    // Create application
+    // 4. Create path for the database
+    // req.file.path gives the full system path. We usually want a relative path for the DB.
+    // Example: "uploads/cv/1709...resume.pdf"
+    const cvPath = req.file.path; 
+
+    // 5. Create application
     const application = await Application.create({
       job: jobId,
       user: req.user.id,
-      notes: notes || ""
+      fullName,
+      phone,
+      linkedin,
+      cvUrl: cvPath,
+      extraNotes: extraNotes || "",
+      status: "pending" // Default status
     });
 
     return res.status(201).json({ message: "Application submitted", application });
@@ -76,9 +95,18 @@ router.put("/:id/status", authMiddleware, adminOnly, async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    const allowed = ["pending", "reviewed", "accepted", "rejected"];
+    const allowed = [
+      "pending", 
+      "under_review", 
+      "phone_screen", 
+      "technical_interview", 
+      "hr_interview", 
+      "offer", 
+      "rejected"
+    ];
+
     if (!allowed.includes(status)) {
-      return res.status(400).json({ message: "Invalid status" });
+      return res.status(400).json({ message: "Invalid status value" });
     }
 
     const updated = await Application.findByIdAndUpdate(
