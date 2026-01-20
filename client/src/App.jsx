@@ -1,7 +1,9 @@
 // client/src/App.jsx
 //main app shell with navbar, routing, etc
+import JobDetailsPage from "./pages/JobDetailsPage.jsx";
+import ApplyFormPage from "./pages/ApplyFormPage.jsx";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useAuth } from "./context/AuthContext.jsx";
+import { useAuth } from "./context/useAuth.jsx";
 import Navbar from "./components/Navbar.jsx";
 //auth pages
 import LoginPage from "./pages/LoginPage.jsx";
@@ -86,6 +88,26 @@ export default function App() {
               <ProtectedRoute>
                 <RoleRoute allowedRoles={["user", "admin"]}>
                   <UserApplicationsPage />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/user/jobs/:jobId"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={["user", "admin"]}>
+                  <JobDetailsPage />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/user/jobs/:jobId/apply"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={["user", "admin"]}>
+                  <ApplyFormPage />
                 </RoleRoute>
               </ProtectedRoute>
             }

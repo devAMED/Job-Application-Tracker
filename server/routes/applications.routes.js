@@ -86,6 +86,25 @@ router.get("/", authMiddleware, adminOnly, async (req, res) => {
   }
 });
 
+router.get("/my/summary", authMiddleware, async (req, res) => {
+  try {
+    const apps = await Application.find({ user: req.user.id })
+      .select("job status")      // only return job + status
+      .lean();
+
+    const summary = apps.map((a) => ({
+      jobId: a.job.toString(),
+      status: a.status,
+    }));
+
+    return res.json(summary);
+  } catch (err) {
+    console.error("GET /api/applications/my/summary error:", err);
+    return res.status(500).json({ message: "Failed to load applications summary" });
+  }
+});
+
+
 /**
  * UPDATE APPLICATION STATUS (Admin)
  * PUT /api/applications/:id/status

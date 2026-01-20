@@ -36,12 +36,44 @@ router.post("/", authMiddleware, adminOnly, async (req, res) => {
  */
 router.get("/", async (req, res) => {
   try {
-    const jobs = await Job.find().sort({ createdAt: -1 });
+    const { sort, locationType, jobType } = req.query;
+
+    // Build filter object
+    const filter = {};
+    if (locationType && locationType !== "all") filter.locationType = locationType;
+    if (jobType && jobType !== "all") filter.jobType = jobType;
+
+    // Build sort option
+    let sortOption = { createdAt: -1 }; // default newest first
+    if (sort === "createdAt_asc") sortOption = { createdAt: 1 };
+    if (sort === "createdAt_desc") sortOption = { createdAt: -1 };
+
+    const jobs = await Job.find(filter).sort(sortOption);
     return res.json(jobs);
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
+  } catch (err) {
+    console.error("GET /api/jobs error:", err);
+    return res.status(500).json({ message: "Failed to fetch jobs" });
   }
 });
+
+router.get("/:id", async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.id);
+    if (!job) return res.status(404).json({ message: "Job not found" });
+
+    return res.json(job);
+  } catch (err) {
+    console.error("GET /api/jobs/:id error:", err);
+
+    // If invalid Mongo ID format
+    if (err.name === "CastError") {
+      return res.status(400).json({ message: "Invalid job id" });
+    }
+
+    return res.status(500).json({ message: "Failed to load job details" });
+  }
+});
+
 
 /**
  * UPDATE JOB (Admin Only)

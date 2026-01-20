@@ -1,45 +1,88 @@
 // client/src/components/JobList.jsx
 import React from "react";
+import { Link } from "react-router-dom";
 
-function JobList({ jobs, onEdit, onDelete, onApply, showActionsFor = "admin" }) {
+function prettyStatus(status) {
+  if (!status) return "Applied";
+  const s = String(status).toLowerCase();
+
+  // Customize the labels you want users to see
+  if (s === "pending" || s === "under_review") return "Under review";
+  if (s === "rejected") return "Rejected";
+  if (s === "offer") return "Offer";
+  if (s.includes("interview")) return "Interview stage";
+  if (s === "phone_screen") return "Phone screen";
+  return "Applied";
+}
+
+function JobList({
+  jobs,
+  onEdit,
+  onDelete,
+  onApply,
+  showActionsFor = "admin",
+  appliedMap = {},
+}) {
   if (!jobs || jobs.length === 0) {
     return <p>No jobs found.</p>;
   }
 
   return (
-    <table>
+    <table style={{ width: "100%", borderCollapse: "collapse" }}>
       <thead>
         <tr>
-          <th>Title</th>
-          <th>Company</th>
-          <th>Location</th>
-          <th>Description</th>
-          {showActionsFor === "admin" && <th>Actions</th>}
-          {showActionsFor === "user" && <th>Apply</th>}
+          <th style={{ textAlign: "left", padding: "10px" }}>Title</th>
+          <th style={{ textAlign: "left", padding: "10px" }}>Company</th>
+          <th style={{ textAlign: "left", padding: "10px" }}>Location</th>
+          <th style={{ textAlign: "left", padding: "10px" }}>Description</th>
+          {showActionsFor === "admin" && <th style={{ padding: "10px" }}>Actions</th>}
+          {showActionsFor === "user" && <th style={{ padding: "10px" }}>Apply</th>}
         </tr>
       </thead>
+
       <tbody>
-        {jobs.map(job => (
-          <tr key={job._id}>
-            <td>{job.title}</td>
-            <td>{job.company}</td>
-            <td>{job.location}</td>
-            <td>{job.description}</td>
+        {jobs.map((job) => {
+          const status = appliedMap?.[job._id];
+          const alreadyApplied = !!status;
 
-            {showActionsFor === "admin" && (
-              <td>
-                <button onClick={() => onEdit(job)}>Edit</button>
-                <button onClick={() => onDelete(job._id)}>Delete</button>
+          return (
+            <tr key={job._id} style={{ borderTop: "1px solid #eee" }}>
+              <td style={{ padding: "10px" }}>
+                <Link
+                  to={`/user/jobs/${job._id}`}
+                  style={{ textDecoration: "underline" }}
+                >
+                  {job.title}
+                </Link>
               </td>
-            )}
 
-            {showActionsFor === "user" && (
-              <td>
-                <button onClick={() => onApply(job)}>Apply</button>
-              </td>
-            )}
-          </tr>
-        ))}
+              <td style={{ padding: "10px" }}>{job.company}</td>
+              <td style={{ padding: "10px" }}>{job.location}</td>
+              <td style={{ padding: "10px" }}>{job.description}</td>
+
+              {showActionsFor === "admin" && (
+                <td style={{ padding: "10px" }}>
+                  <button onClick={() => onEdit(job)} style={{ marginRight: 8 }}>
+                    Edit
+                  </button>
+                  <button onClick={() => onDelete(job._id)}>Delete</button>
+                </td>
+              )}
+
+              {showActionsFor === "user" && (
+                <td style={{ padding: "10px" }}>
+                  {alreadyApplied ? (
+                    <button disabled style={{ opacity: 0.7, cursor: "not-allowed" }}>
+                      {prettyStatus(status)}
+                    </button>
+                  ) : (
+                    <button onClick={() => onApply(job)}>Apply</button>
+                  )}
+                </td>
+              )}
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );
