@@ -34,7 +34,9 @@ function JobList({
           <th style={{ textAlign: "left", padding: "10px" }}>Title</th>
           <th style={{ textAlign: "left", padding: "10px" }}>Company</th>
           <th style={{ textAlign: "left", padding: "10px" }}>Location</th>
+          <th style={{ textAlign: "left", padding: "10px" }}>Salary</th>
           <th style={{ textAlign: "left", padding: "10px" }}>Description</th>
+          <th style={{ textAlign: "left", padding: "10px" }}>Posted</th>
           {showActionsFor === "admin" && <th style={{ padding: "10px" }}>Actions</th>}
           {showActionsFor === "user" && <th style={{ padding: "10px" }}>Apply</th>}
         </tr>
@@ -49,17 +51,31 @@ function JobList({
           return (
             <tr key={job._id} style={{ borderTop: "1px solid #eee" }}>
               <td style={{ padding: "10px" }}>
-                <Link
-                  to={`/user/jobs/${job._id}`}
-                  style={{ textDecoration: "underline" }}
-                >
-                  {job.title}
-                </Link>
+                {showActionsFor === "admin" ? (
+                  <span>{job.title}</span>
+                ) : (
+                  <Link
+                    to={`/user/jobs/${job._id}`}
+                    style={{ textDecoration: "underline" }}
+                  >
+                    {job.title}
+                  </Link>
+                )}
               </td>
 
               <td style={{ padding: "10px" }}>{job.company}</td>
               <td style={{ padding: "10px" }}>{job.location}</td>
+              <td style={{ padding: "10px" }}>
+                {job.salaryMin || job.salaryMax
+                  ? `${job.salaryMin ? `$${job.salaryMin}` : ""}${
+                      job.salaryMin && job.salaryMax ? " - " : ""
+                    }${job.salaryMax ? `$${job.salaryMax}` : ""}`
+                  : "—"}
+              </td>
               <td style={{ padding: "10px" }}>{job.description}</td>
+              <td style={{ padding: "10px" }}>
+                {job.createdAt ? new Date(job.createdAt).toLocaleDateString() : "—"}
+              </td>
 
               {showActionsFor === "admin" && (
                 <td style={{ padding: "10px" }}>

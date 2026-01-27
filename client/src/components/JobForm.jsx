@@ -5,6 +5,10 @@ const emptyJob = {
   title: "",
   company: "",
   location: "",
+  salaryMin: "",
+  salaryMax: "",
+  requirements: "",
+  about: "",
   description: "",
 };
 
@@ -27,37 +31,77 @@ function JobForm({ onSubmit, initialJob, onCancel }) {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <input
-        name="title"
-        placeholder="Job title"
-        value={form.title}
+    <form onSubmit={handleSubmit} style={{ display: "grid", gap: "0.8rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "0.8rem" }}>
+        <input
+          name="title"
+          placeholder="Job title"
+          value={form.title}
+          onChange={handleChange}
+        />
+        <input
+          name="company"
+          placeholder="Company"
+          value={form.company}
+          onChange={handleChange}
+        />
+        <input
+          name="location"
+          placeholder="Location"
+          value={form.location}
+          onChange={handleChange}
+        />
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "0.8rem" }}>
+        <input
+          name="salaryMin"
+          placeholder="Min salary (e.g. 60000)"
+          value={form.salaryMin || ""}
+          onChange={handleChange}
+        />
+        <input
+          name="salaryMax"
+          placeholder="Max salary (e.g. 90000)"
+          value={form.salaryMax || ""}
+          onChange={handleChange}
+        />
+      </div>
+
+      <textarea
+        name="about"
+        placeholder="About the job (share team, mission, what makes it special)"
+        value={form.about || ""}
         onChange={handleChange}
+        rows={3}
       />
-      <input
-        name="company"
-        placeholder="Company"
-        value={form.company}
+
+      <textarea
+        name="requirements"
+        placeholder="Key requirements (separate with new lines)"
+        value={form.requirements || ""}
         onChange={handleChange}
+        rows={3}
       />
-      <input
-        name="location"
-        placeholder="Location"
-        value={form.location}
-        onChange={handleChange}
-      />
+
       <textarea
         name="description"
-        placeholder="Description"
+        placeholder="Public job description"
         value={form.description}
         onChange={handleChange}
+        rows={4}
       />
-      <button type="submit">{initialJob ? "Update Job" : "Create Job"}</button>
-      {onCancel && (
-        <button type="button" onClick={onCancel}>
-          Cancel
+
+      <div style={{ display: "flex", gap: "0.6rem" }}>
+        <button type="submit">
+          {initialJob ? "Update Job" : "Create Job"}
         </button>
-      )}
+        {onCancel && (
+          <button type="button" onClick={onCancel} style={{ opacity: 0.7 }}>
+            Cancel
+          </button>
+        )}
+      </div>
     </form>
   );
 }

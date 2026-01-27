@@ -115,12 +115,12 @@ router.put("/:id/status", authMiddleware, adminOnly, async (req, res) => {
     const { status } = req.body;
 
     const allowed = [
-      "pending", 
-      "under_review", 
-      "phone_screen", 
-      "technical_interview", 
-      "hr_interview", 
-      "offer", 
+      "pending",
+      "under_review",
+      "phone_screen",
+      "technical_interview",
+      "hr_interview",
+      "offer",
       "rejected"
     ];
 

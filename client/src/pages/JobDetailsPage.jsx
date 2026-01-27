@@ -75,12 +75,45 @@ export default function JobDetailsPage() {
               <p style={{ margin: "0.25rem 0" }}>
                 <strong>Job type:</strong> {job.jobType || "N/A"}
               </p>
+              <p style={{ margin: "0.25rem 0" }}>
+                <strong>Salary:</strong>{" "}
+                {job.salaryMin || job.salaryMax
+                  ? `${job.salaryMin ? `$${job.salaryMin}` : ""}${
+                      job.salaryMin && job.salaryMax ? " - " : ""
+                    }${job.salaryMax ? `$${job.salaryMax}` : ""}`
+                  : "Not provided"}
+              </p>
+              <p style={{ margin: "0.25rem 0" }}>
+                <strong>Posted:</strong>{" "}
+                {job.createdAt ? new Date(job.createdAt).toLocaleDateString() : "—"}
+              </p>
             </div>
 
             <div style={{ marginTop: "1.25rem" }}>
               <h4 style={{ marginBottom: "0.5rem" }}>Description</h4>
               <p style={{ lineHeight: 1.6 }}>{job.description || "No description provided."}</p>
             </div>
+
+            {job.about && (
+              <div style={{ marginTop: "1.25rem" }}>
+                <h4 style={{ marginBottom: "0.5rem" }}>About the role</h4>
+                <p style={{ lineHeight: 1.6 }}>{job.about}</p>
+              </div>
+            )}
+
+            {job.requirements && (
+              <div style={{ marginTop: "1.25rem" }}>
+                <h4 style={{ marginBottom: "0.5rem" }}>Requirements</h4>
+                <ul style={{ paddingLeft: "1.25rem", lineHeight: 1.6 }}>
+                  {job.requirements
+                    .split("\n")
+                    .filter(Boolean)
+                    .map((item, idx) => (
+                      <li key={idx}>{item.trim()}</li>
+                    ))}
+                </ul>
+              </div>
+            )}
 
             <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem" }}>
               <button onClick={() => navigate(`/user/jobs/${jobId}/apply`)}>

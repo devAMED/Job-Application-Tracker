@@ -5,6 +5,33 @@ const adminOnly = require("../middleware/role.middleware");
 
 const router = express.Router();
 
+function parseSalary(value) {
+  if (value === undefined || value === null || value === "") return 0;
+  const raw = String(value).trim().toLowerCase().replace(/[, $]/g, "");
+  if (!raw) return 0;
+  const match = raw.match(/^([\d.]+)([km]?)$/);
+  if (!match) return 0;
+  const [, numStr, suffix] = match;
+  const parsed = Number(numStr);
+  if (!Number.isFinite(parsed)) return 0;
+  const multiplier = suffix === "m" ? 1_000_000 : suffix === "k" ? 1_000 : 1;
+  return parsed * multiplier;
+}
+
+function formatSalary(value) {
+  const num = Number(value);
+  if (!Number.isFinite(num) || num <= 0) return "";
+  if (num >= 1_000_000) {
+    const base = num / 1_000_000;
+    return `${base % 1 === 0 ? base.toFixed(0) : base}m`;
+  }
+  if (num >= 1_000) {
+    const base = num / 1_000;
+    return `${base % 1 === 0 ? base.toFixed(0) : base}k`;
+  }
+  return `${num}`;
+}
+
 /**
  * CREATE JOB (Admin Only)
  * POST /api/jobs
@@ -33,8 +60,8 @@ router.post("/", authMiddleware, adminOnly, async (req, res) => {
       company,
       location,
       description,
-      salaryMin: salaryMin || 0,
-      salaryMax: salaryMax || 0,
+      salaryMin: formatSalary(parseSalary(salaryMin)),
+      salaryMax: formatSalary(parseSalary(salaryMax)),
       requirements: requirements || "",
       about: about || "",
       locationType: locationType || undefined,
@@ -99,7 +126,11 @@ router.get("/:id", async (req, res) => {
 router.put("/:id", authMiddleware, adminOnly, async (req, res) => {
   try {
     const { id } = req.params;
-    const updatedJob = await Job.findByIdAndUpdate(id, req.body, { new: true });
+    const updateBody = { ...req.body };
+    if ("salaryMin" in req.body) updateBody.salaryMin = formatSalary(parseSalary(req.body.salaryMin));
+    if ("salaryMax" in req.body) updateBody.salaryMax = formatSalary(parseSalary(req.body.salaryMax));
+
+    const updatedJob = await Job.findByIdAndUpdate(id, updateBody, { new: true });
 
     if (!updatedJob) {
       return res.status(404).json({ message: "Job not found" });

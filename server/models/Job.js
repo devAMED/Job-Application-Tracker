@@ -17,6 +17,22 @@ const JobSchema = new mongoose.Schema({
     type: String, 
     required: true 
   },
+  salaryMin: {
+    type: String,
+    default: ""
+  },
+  salaryMax: {
+    type: String,
+    default: ""
+  },
+  requirements: {
+    type: String,
+    default: ""
+  },
+  about: {
+    type: String,
+    default: ""
+  },
 
   // --- New Fields for Filters ---
   locationType: { 
