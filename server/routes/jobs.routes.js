@@ -11,7 +11,18 @@ const router = express.Router();
  */
 router.post("/", authMiddleware, adminOnly, async (req, res) => {
   try {
-    const { title, company, location, description } = req.body;
+    const {
+      title,
+      company,
+      location,
+      description,
+      salaryMin,
+      salaryMax,
+      requirements,
+      about,
+      locationType,
+      jobType,
+    } = req.body;
 
     if (!title || !company || !location || !description) {
       return res.status(400).json({ message: "All fields are required" });
@@ -21,7 +32,13 @@ router.post("/", authMiddleware, adminOnly, async (req, res) => {
       title,
       company,
       location,
-      description
+      description,
+      salaryMin: salaryMin || 0,
+      salaryMax: salaryMax || 0,
+      requirements: requirements || "",
+      about: about || "",
+      locationType: locationType || undefined,
+      jobType: jobType || undefined,
     });
 
     return res.status(201).json({ message: "Job created", job: newJob });
