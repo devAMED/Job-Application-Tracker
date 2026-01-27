@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { getJobById } from "../api/JobsApi";
+import { applyToJobWithForm } from "../api/applicationsApi";
 
 export default function ApplyFormPage() {
   const { jobId } = useParams();
@@ -36,10 +37,24 @@ export default function ApplyFormPage() {
     }
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    // Placeholder only (teammate 3 wires applyToJobWithForm)
-    alert("Form UI ready ✅ Teammate 3 will connect submission + upload.");
+    setError("");
+    const formData = new FormData();
+    formData.append("fullName", fullName);
+    formData.append("phone", phone);
+    formData.append("linkedin", linkedin);
+    formData.append("notes", extraNotes);
+    if (cvFile) {
+      formData.append("cv", cvFile);
+    }
+    try {
+      await applyToJobWithForm(jobId, formData);
+      navigate("/user/jobs");
+    } catch (err) {
+      console.error(err);
+      setError(err?.message || "Failed to submit application");
+    }
   }
 
   return (
@@ -129,6 +144,7 @@ export default function ApplyFormPage() {
                   CV Upload
                   <input
                     type="file"
+                    accept=".pdf,.doc,.docx"
                     onChange={(e) => setCvFile(e.target.files?.[0] || null)}
                     style={{ display: "block", width: "100%", marginTop: 6 }}
                     required
@@ -148,9 +164,6 @@ export default function ApplyFormPage() {
                 </button>
               </div>
 
-              <div style={{ marginTop: "1rem", fontSize: "0.9rem", opacity: 0.7 }}>
-                (Teammate 3 will connect this form to the API endpoint and actually upload CV.)
-              </div>
             </form>
           </>
         )}

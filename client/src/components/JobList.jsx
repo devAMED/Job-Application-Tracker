@@ -42,8 +42,9 @@ function JobList({
 
       <tbody>
         {jobs.map((job) => {
+          const hasKey = Object.prototype.hasOwnProperty.call(appliedMap || {}, job._id);
           const status = appliedMap?.[job._id];
-          const alreadyApplied = !!status;
+          const alreadyApplied = hasKey;
 
           return (
             <tr key={job._id} style={{ borderTop: "1px solid #eee" }}>

@@ -2,14 +2,22 @@
 import React from "react";
 
 const STATUS_COLORS = {
+  submitted: "teal",
   pending: "gray",
+  under_review: "orange",
   reviewed: "blue",
-  accepted: "green",
+  shortlisted: "dodgerblue",
+  phone_screen: "slateblue",
+  interview: "purple",
+  offer: "goldenrod",
+  hired: "green",
   rejected: "red",
+  accepted: "green",
 };
 
 function StatusBadge({ status }) {
-  const bg = STATUS_COLORS[status] || "gray";
+  const safeStatus = status || "pending";
+  const bg = STATUS_COLORS[safeStatus] || "gray";
   return (
     <span
       style={{
@@ -21,7 +29,7 @@ function StatusBadge({ status }) {
         textTransform: "capitalize",
       }}
     >
-      {status}
+      {safeStatus}
     </span>
   );
 }
@@ -71,9 +79,13 @@ function ApplicationList({ applications, forRole = "admin", onStatusChange }) {
                   value={app.status}
                   onChange={e => onStatusChange(app._id, e.target.value)}
                 >
-                  <option value="pending">pending</option>
-                  <option value="reviewed">reviewed</option>
-                  <option value="accepted">accepted</option>
+                  <option value="submitted">submitted</option>
+                  <option value="under_review">under_review</option>
+                  <option value="shortlisted">shortlisted</option>
+                  <option value="phone_screen">phone_screen</option>
+                  <option value="interview">interview</option>
+                  <option value="offer">offer</option>
+                  <option value="hired">hired</option>
                   <option value="rejected">rejected</option>
                 </select>
               </td>
