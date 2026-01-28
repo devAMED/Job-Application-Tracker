@@ -42,7 +42,7 @@ function AdminApplicationsPage() {
     }
   }
 
-return (
+  return (
     <div
       style={{
         minHeight: "calc(100vh - 80px)",
@@ -61,21 +61,24 @@ return (
           border: "1px solid #e5e7eb",
           width: "100%",
           maxWidth: "1000px",
+          overflow: "hidden",
         }}
       >
         <h2 style={{ marginBottom: "1rem" }}>Admin – Applications</h2>
 
         {error && <p style={{ color: "red" }}>{error}</p>}
 
-        {loading ? (
-          <p>Loading applications...</p>
-        ) : (
-          <ApplicationList
-            applications={apps}
-            forRole="admin"
-            onStatusChange={handleStatusChange}
-          />
-        )}
+        <div style={{ overflowX: "auto" }}>
+          {loading ? (
+            <p>Loading applications...</p>
+          ) : (
+            <ApplicationList
+              applications={apps}
+              forRole="admin"
+              onStatusChange={handleStatusChange}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

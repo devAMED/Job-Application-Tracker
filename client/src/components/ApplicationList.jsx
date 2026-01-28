@@ -31,13 +31,15 @@ function StatusBadge({ status }) {
   return (
     <span
       style={{
-        padding: "2px 8px",
+        padding: "6px 10px",
         borderRadius: "999px",
         background: bg,
         color: "white",
-        fontSize: "0.75rem",
+        fontSize: "0.78rem",
+        fontWeight: 600,
         textTransform: "capitalize",
         whiteSpace: "nowrap",
+        boxShadow: `0 6px 15px ${bg}44`,
       }}
     >
       {label}
@@ -98,33 +100,33 @@ function ApplicationList({
   }, [initialDrafts]);
 
   return (
-    <table style={{ width: "100%", borderCollapse: "collapse" }}>
+    <table style={{ width: "100%", borderCollapse: "collapse", borderSpacing: 0 }}>
       <thead>
-        <tr style={{ textAlign: "left" }}>
-          {forRole === "admin" && <th style={{ padding: 10 }}>Applicant</th>}
-          <th style={{ padding: 10 }}>Job</th>
-          <th style={{ padding: 10 }}>Status</th>
-          <th style={{ padding: 10 }}>Applied At</th>
+        <tr style={{ textAlign: "left", background: "#f8fafc" }}>
+          {forRole === "admin" && <th style={{ padding: "12px 14px" }}>Applicant</th>}
+          <th style={{ padding: "12px 14px" }}>Job</th>
+          <th style={{ padding: "12px 14px", textAlign: "center" }}>Status</th>
+          <th style={{ padding: "12px 14px" }}>Applied At</th>
 
-          {forRole === "user" && <th style={{ padding: 10 }}>Interview (read-only)</th>}
-          {forRole === "user" && <th style={{ padding: 10 }}>Reminder</th>}
-          {forRole === "user" && <th style={{ padding: 10 }}>Notes</th>}
+          {forRole === "user" && <th style={{ padding: "12px 14px" }}>Interview (read-only)</th>}
+          {forRole === "user" && <th style={{ padding: "12px 14px" }}>Reminder</th>}
+          {forRole === "user" && <th style={{ padding: "12px 14px" }}>Notes</th>}
 
-          {forRole === "admin" && <th style={{ padding: 10 }}>Actions</th>}
+          {forRole === "admin" && <th style={{ padding: "12px 14px", textAlign: "center" }}>Actions</th>}
         </tr>
       </thead>
 
       <tbody>
         {applications.map((app) => (
-          <tr key={app._id} style={{ borderTop: "1px solid #eee" }}>
+          <tr key={app._id} style={{ borderTop: "1px solid #e5e7eb" }}>
             {forRole === "admin" && (
-              <td style={{ padding: 10 }}>
+              <td style={{ padding: "14px", verticalAlign: "top" }}>
                 <div style={{ fontWeight: 600 }}>{app.user?.name || "—"}</div>
                 <div style={{ fontSize: 12, color: "#6b7280" }}>{app.user?.email || "—"}</div>
               </td>
             )}
 
-            <td style={{ padding: 10 }}>
+            <td style={{ padding: "14px", verticalAlign: "top" }}>
               <div style={{ fontWeight: 600 }}>{app.job?.title || "—"}</div>
               <div style={{ fontSize: 12, color: "#6b7280" }}>{app.job?.company || "—"}</div>
 
@@ -140,7 +142,13 @@ function ApplicationList({
               )}
             </td>
 
-            <td style={forRole === "user" ? { padding: 10, minWidth: 420 } : { padding: 10 }}>
+            <td
+              style={
+                forRole === "user"
+                  ? { padding: "14px", minWidth: 420, verticalAlign: "top" }
+                  : { padding: "14px", textAlign: "center", verticalAlign: "middle" }
+              }
+            >
               {forRole === "user" ? (
                 <>
                   <div
@@ -172,11 +180,11 @@ function ApplicationList({
               )}
             </td>
 
-            <td style={{ padding: 10 }}>{formatNice(app.createdAt)}</td>
+            <td style={{ padding: "14px", verticalAlign: "top" }}>{formatNice(app.createdAt)}</td>
 
             {/* USER: interview info read-only */}
             {forRole === "user" && (
-              <td style={{ padding: 10, minWidth: 260 }}>
+              <td style={{ padding: "14px", minWidth: 260, verticalAlign: "top" }}>
                 <div style={{ fontSize: 13 }}>
                   <div>
                     <strong>Date:</strong> {formatNice(app.interviewAt)}
@@ -206,7 +214,7 @@ function ApplicationList({
 
             {/* USER: reminders (editable) */}
             {forRole === "user" && (
-              <td style={{ padding: 10, minWidth: 220 }}>
+              <td style={{ padding: "14px", minWidth: 220 }}>
                 <input
                   type="datetime-local"
                   value={trackingDrafts?.[app._id]?.reminderAt || ""}
@@ -235,7 +243,7 @@ function ApplicationList({
 
             {/* USER: notes (editable) */}
             {forRole === "user" && (
-              <td style={{ padding: 10, minWidth: 300 }}>
+              <td style={{ padding: "14px", minWidth: 300 }}>
                 <div style={{ fontSize: "0.85rem", color: "#374151", marginBottom: 6 }}>
                   {app.notes?.length ? `${app.notes.length} note(s)` : "No notes yet"}
                 </div>
@@ -287,22 +295,30 @@ function ApplicationList({
 
             {/* ADMIN: status dropdown + view */}
             {forRole === "admin" && (
-              <td style={{ padding: 10, minWidth: 220 }}>
-                <div style={{ display: "grid", gap: 8 }}>
-                  <Link
-                    to={`/admin/applications/${app._id}`}
+              <td style={{ padding: "14px", minWidth: 220, textAlign: "center", verticalAlign: "middle" }}>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                  <div
                     style={{
-                      textDecoration: "underline",
-                      fontSize: 13,
-                      color: "#111827",
+                      position: "relative",
+                      width: "12px",
+                      height: "12px",
+                      borderRadius: "50%",
+                      background: STATUS_COLORS[app.status] || "#e5e7eb",
+                      boxShadow: `0 0 0 6px ${STATUS_COLORS[app.status] || "#f3f4f6"}20`,
                     }}
-                  >
-                    Open details
-                  </Link>
-
+                  ></div>
                   <select
                     value={app.status || "pending"}
                     onChange={(e) => onStatusChange(app._id, e.target.value)}
+                    style={{
+                      minWidth: 180,
+                      maxWidth: "100%",
+                      width: "100%",
+                      padding: "10px 12px",
+                      borderRadius: "12px",
+                      border: "1px solid #e5e7eb",
+                      background: "#f8fafc",
+                    }}
                   >
                     <option value="pending">pending</option>
                     <option value="under_review">under_review</option>
