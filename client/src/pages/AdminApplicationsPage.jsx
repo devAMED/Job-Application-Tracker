@@ -1,5 +1,6 @@
 // client/src/pages/AdminApplicationsPage.jsx
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   getAllApplications,
   updateApplicationStatus,
@@ -7,6 +8,7 @@ import {
 import ApplicationList from "../components/ApplicationList";
 
 function AdminApplicationsPage() {
+  const navigate = useNavigate();
   const [apps, setApps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

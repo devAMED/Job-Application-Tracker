@@ -14,6 +14,9 @@ import AdminApplicationsPage from "./pages/AdminApplicationsPage.jsx";
 //user
 import UserJobsPage from "./pages/UserJobsPage.jsx";
 import UserApplicationsPage from "./pages/UserApplicationsPage.jsx";
+import AdminApplicationDetailsPage from "./pages/AdminApplicationDetailsPage";
+import UserApplicationDetailsPage from "./pages/UserApplicationDetailsPage";
+
 
 //protext the routes so only logged in users can access
 const ProtectedRoute = ({ children }) => {
@@ -112,6 +115,9 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/admin/applications/:id" element={<AdminApplicationDetailsPage />} />
+          <Route path="/user/applications/:id" element={<UserApplicationDetailsPage />} />
+
 
           {/* Default */}
           <Route path="*" element={<Navigate to="/login" replace />} />

@@ -1,71 +1,109 @@
 import { apiClient } from "./apiClient";
 
-// 1) Simple apply (JSON body) - keep it if some UI still uses it
-export async function applyToJob(jobId, notes = "") {
-  try {
-    const res = await apiClient.post(`/api/applications/${jobId}`, { notes });
-    return res.data.application || res.data;
-  } catch (error) {
-    const message = error.response?.data?.message || "Failed to apply to job";
-    throw new Error(message);
-  }
-}
-
-// 2) Apply with full form + CV upload (multipart/form-data)
+/**
+ * USER: apply to job with FormData (multipart)
+ */
 export async function applyToJobWithForm(jobId, formData) {
-  try {
-    const res = await apiClient.post(`/api/applications/${jobId}`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    return res.data.application || res.data;
-  } catch (error) {
-    const message = error.response?.data?.message || "Failed to apply to job";
-    throw new Error(message);
-  }
+  const res = await apiClient.post(`/api/applications/${jobId}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data.application;
+}
+/**
+ * USER: update tracking fields on own application
+ * patch can include: { status, interviewAt, reminderAt, extraNotes }
+ */
+export async function updateApplicationTracking(appId, patch) {
+  const res = await apiClient.put(`/api/applications/${appId}/tracking`, patch);
+  return res.data.application;
 }
 
-// 3) User: my applications list
+
+/**
+ * USER: my applications list
+ */
 export async function getMyApplications() {
-  try {
-    const res = await apiClient.get(`/api/applications/my`);
-    return res.data;
-  } catch (error) {
-    const message = error.response?.data?.message || "Failed to load applications";
-    throw new Error(message);
-  }
+  const res = await apiClient.get("/api/applications/my");
+  return res.data;
 }
 
-// 4) User: summary map (jobId + status) for “Applied/Under review”
+/**
+ * USER: summary used to disable Apply button
+ */
 export async function getMyApplicationsSummary() {
-  try {
-    const res = await apiClient.get(`/api/applications/my/summary`);
-    return res.data; // [{ jobId, status }, ...]
-  } catch (error) {
-    const message =
-      error.response?.data?.message || "Failed to load applications summary";
-    throw new Error(message);
-  }
+  const res = await apiClient.get("/api/applications/my/summary");
+  return res.data; // [{ jobId, status }]
 }
 
-// 5) Admin: all applications
+/**
+ * USER: analytics (response rate)
+ */
+export async function getMyApplicationsAnalytics() {
+  const res = await apiClient.get("/api/applications/my/analytics");
+  return res.data;
+}
+
+/**
+ * USER: get one of my applications (details page)
+ */
+export async function getMyApplicationById(appId) {
+  const res = await apiClient.get(`/api/applications/my/${appId}`);
+  return res.data.application;
+}
+
+/**
+ * ADMIN: list all apps
+ */
 export async function getAllApplications() {
-  try {
-    const res = await apiClient.get(`/api/applications`);
-    return res.data;
-  } catch (error) {
-    const message =
-      error.response?.data?.message || "Failed to load all applications";
-    throw new Error(message);
-  }
+  const res = await apiClient.get("/api/applications");
+  return res.data;
 }
 
-// 6) Admin: update status
-export async function updateApplicationStatus(id, status) {
-  try {
-    const res = await apiClient.put(`/api/applications/${id}/status`, { status });
-    return res.data.application || res.data;
-  } catch (error) {
-    const message = error.response?.data?.message || "Failed to update status";
-    throw new Error(message);
-  }
+/**
+ * ADMIN: get one app (details)
+ */
+export async function getApplicationByIdAdmin(appId) {
+  const res = await apiClient.get(`/api/applications/${appId}`);
+  return res.data.application;
+}
+
+/**
+ * ADMIN: update status
+ */
+export async function updateApplicationStatus(appId, status) {
+  const res = await apiClient.put(`/api/applications/${appId}/status`, { status });
+  return res.data.application;
+}
+
+/**
+ * ADMIN: schedule/update interview
+ */
+export async function updateInterviewAdmin(appId, payload) {
+  // payload: { interviewAt, interviewLocation, interviewLink, interviewNotes }
+  const res = await apiClient.put(`/api/applications/${appId}/interview`, payload);
+  return res.data.application;
+}
+
+/**
+ * USER: add note to own application
+ */
+export async function addNoteToApplication(appId, text) {
+  const res = await apiClient.post(`/api/applications/${appId}/notes`, { text });
+  return res.data.application;
+}
+
+/**
+ * ADMIN: add admin note
+ */
+export async function addAdminNoteToApplication(appId, text) {
+  const res = await apiClient.post(`/api/applications/${appId}/admin/notes`, { text });
+  return res.data.application;
+}
+
+/**
+ * USER: set reminder datetime
+ */
+export async function setReminder(appId, reminderAt) {
+  const res = await apiClient.put(`/api/applications/${appId}/reminder`, { reminderAt });
+  return res.data.application;
 }

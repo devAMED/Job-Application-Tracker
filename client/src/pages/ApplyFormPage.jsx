@@ -44,7 +44,7 @@ export default function ApplyFormPage() {
     formData.append("fullName", fullName);
     formData.append("phone", phone);
     formData.append("linkedin", linkedin);
-    formData.append("notes", extraNotes);
+    formData.append("extraNotes", extraNotes);
     if (cvFile) {
       formData.append("cv", cvFile);
     }

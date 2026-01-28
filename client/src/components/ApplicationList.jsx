@@ -1,5 +1,6 @@
 // client/src/components/ApplicationList.jsx
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import StatusBar from "./StatusBar";
 
 const STATUS_COLORS = {
@@ -26,6 +27,7 @@ function StatusBadge({ status }) {
   const safeStatus = status || "pending";
   const bg = STATUS_COLORS[safeStatus] || "gray";
   const label = STATUS_LABELS[safeStatus] || STATUS_LABELS.pending;
+
   return (
     <span
       style={{
@@ -35,6 +37,7 @@ function StatusBadge({ status }) {
         color: "white",
         fontSize: "0.75rem",
         textTransform: "capitalize",
+        whiteSpace: "nowrap",
       }}
     >
       {label}
@@ -42,40 +45,102 @@ function StatusBadge({ status }) {
   );
 }
 
-function ApplicationList({ applications, forRole = "user", onStatusChange }) {
+function toLocalDateTimeValue(dt) {
+  if (!dt) return "";
+  const d = new Date(dt);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
+    d.getHours()
+  )}:${pad(d.getMinutes())}`;
+}
+
+function formatNice(dt) {
+  if (!dt) return "—";
+  try {
+    return new Date(dt).toLocaleString();
+  } catch {
+    return "—";
+  }
+}
+
+function ApplicationList({
+  applications,
+  forRole = "user",
+  onStatusChange,     // admin only
+  onUpdateTracking,   // user: reminderAt / extraNotes only
+  onAddNote,          // user: add note
+}) {
   if (!applications || applications.length === 0) {
     return <p>No applications found.</p>;
   }
 
+  const [trackingDrafts, setTrackingDrafts] = useState({});
+  const [noteDrafts, setNoteDrafts] = useState({});
+
+  const initialDrafts = useMemo(() => {
+    const map = {};
+    for (const a of applications) {
+      map[a._id] = {
+        reminderAt: toLocalDateTimeValue(a.reminderAt),
+      };
+    }
+    return map;
+  }, [applications]);
+
+  useEffect(() => {
+    setTrackingDrafts((prev) => {
+      const next = { ...prev };
+      for (const [id, v] of Object.entries(initialDrafts)) {
+        if (!next[id]) next[id] = v;
+      }
+      return next;
+    });
+  }, [initialDrafts]);
+
   return (
-    <table>
+    <table style={{ width: "100%", borderCollapse: "collapse" }}>
       <thead>
-        <tr>
-          {forRole === "admin" && <th>Applicant</th>}
-          <th>Job</th>
-          <th>Status</th>
-          <th>Applied At</th>
-          {forRole === "admin" && <th>Change Status</th>}
+        <tr style={{ textAlign: "left" }}>
+          {forRole === "admin" && <th style={{ padding: 10 }}>Applicant</th>}
+          <th style={{ padding: 10 }}>Job</th>
+          <th style={{ padding: 10 }}>Status</th>
+          <th style={{ padding: 10 }}>Applied At</th>
+
+          {forRole === "user" && <th style={{ padding: 10 }}>Interview (read-only)</th>}
+          {forRole === "user" && <th style={{ padding: 10 }}>Reminder</th>}
+          {forRole === "user" && <th style={{ padding: 10 }}>Notes</th>}
+
+          {forRole === "admin" && <th style={{ padding: 10 }}>Actions</th>}
         </tr>
       </thead>
+
       <tbody>
-        {applications.map(app => (
-          <tr key={app._id}>
+        {applications.map((app) => (
+          <tr key={app._id} style={{ borderTop: "1px solid #eee" }}>
             {forRole === "admin" && (
-              <td>
-                {app.user?.name}
-                <br />
-                <small>{app.user?.email}</small>
+              <td style={{ padding: 10 }}>
+                <div style={{ fontWeight: 600 }}>{app.user?.name || "—"}</div>
+                <div style={{ fontSize: 12, color: "#6b7280" }}>{app.user?.email || "—"}</div>
               </td>
             )}
 
-            <td>
-              {app.job?.title}
-              <br />
-              <small>{app.job?.company}</small>
+            <td style={{ padding: 10 }}>
+              <div style={{ fontWeight: 600 }}>{app.job?.title || "—"}</div>
+              <div style={{ fontSize: 12, color: "#6b7280" }}>{app.job?.company || "—"}</div>
+
+              {forRole === "admin" && (
+                <div style={{ marginTop: 6 }}>
+                  <Link
+                    to={`/admin/applications/${app._id}`}
+                    style={{ textDecoration: "underline", fontSize: 12 }}
+                  >
+                    View application →
+                  </Link>
+                </div>
+              )}
             </td>
 
-            <td style={forRole === "user" ? { minWidth: "500px" } : undefined}>
+            <td style={forRole === "user" ? { padding: 10, minWidth: 420 } : { padding: 10 }}>
               {forRole === "user" ? (
                 <>
                   <div
@@ -92,11 +157,12 @@ function ApplicationList({ applications, forRole = "user", onStatusChange }) {
                     <div style={{ fontSize: "0.8rem", color: "#4c1d95", fontWeight: 600 }}>
                       Current status
                       <div style={{ fontSize: "0.7rem", color: "#6b7280", fontWeight: 400 }}>
-                        Track your progress below
+                        (Only admin updates this)
                       </div>
                     </div>
                     <StatusBadge status={app.status} />
                   </div>
+
                   <div style={{ marginTop: "0.65rem" }}>
                     <StatusBar status={app.status} statusColors={STATUS_COLORS} />
                   </div>
@@ -106,22 +172,147 @@ function ApplicationList({ applications, forRole = "user", onStatusChange }) {
               )}
             </td>
 
-            <td>{new Date(app.createdAt).toLocaleString()}</td>
+            <td style={{ padding: 10 }}>{formatNice(app.createdAt)}</td>
 
+            {/* USER: interview info read-only */}
+            {forRole === "user" && (
+              <td style={{ padding: 10, minWidth: 260 }}>
+                <div style={{ fontSize: 13 }}>
+                  <div>
+                    <strong>Date:</strong> {formatNice(app.interviewAt)}
+                  </div>
+                  <div style={{ marginTop: 6 }}>
+                    <strong>Location / Link:</strong>{" "}
+                    {app.interviewLocation ? app.interviewLocation : "—"}
+                  </div>
+                  {app.interviewLink ? (
+                    <div style={{ marginTop: 6 }}>
+                      <a href={app.interviewLink} target="_blank" rel="noreferrer">
+                        Open meeting link
+                      </a>
+                    </div>
+                  ) : null}
+                  {app.interviewNotes ? (
+                    <div style={{ marginTop: 6 }}>
+                      <strong>Admin notes:</strong> {app.interviewNotes}
+                    </div>
+                  ) : null}
+                  <div style={{ marginTop: 8, fontSize: 12, color: "#6b7280" }}>
+                    (Admin sets this when you reach interview stage)
+                  </div>
+                </div>
+              </td>
+            )}
+
+            {/* USER: reminders (editable) */}
+            {forRole === "user" && (
+              <td style={{ padding: 10, minWidth: 220 }}>
+                <input
+                  type="datetime-local"
+                  value={trackingDrafts?.[app._id]?.reminderAt || ""}
+                  onChange={(e) =>
+                    setTrackingDrafts((p) => ({
+                      ...p,
+                      [app._id]: { ...(p[app._id] || {}), reminderAt: e.target.value },
+                    }))
+                  }
+                  style={{ width: "100%" }}
+                />
+                {onUpdateTracking && (
+                  <button
+                    onClick={() =>
+                      onUpdateTracking(app._id, {
+                        reminderAt: trackingDrafts?.[app._id]?.reminderAt || "",
+                      })
+                    }
+                    style={{ marginTop: 6, width: "100%" }}
+                  >
+                    Save reminder
+                  </button>
+                )}
+              </td>
+            )}
+
+            {/* USER: notes (editable) */}
+            {forRole === "user" && (
+              <td style={{ padding: 10, minWidth: 300 }}>
+                <div style={{ fontSize: "0.85rem", color: "#374151", marginBottom: 6 }}>
+                  {app.notes?.length ? `${app.notes.length} note(s)` : "No notes yet"}
+                </div>
+
+                <input
+                  placeholder="Add a note..."
+                  value={noteDrafts?.[app._id] || ""}
+                  onChange={(e) =>
+                    setNoteDrafts((p) => ({ ...p, [app._id]: e.target.value }))
+                  }
+                  style={{ width: "100%" }}
+                />
+
+                {onAddNote && (
+                  <button
+                    onClick={() => {
+                      const text = (noteDrafts?.[app._id] || "").trim();
+                      if (!text) return;
+                      onAddNote(app._id, text);
+                      setNoteDrafts((p) => ({ ...p, [app._id]: "" }));
+                    }}
+                    style={{ marginTop: 6, width: "100%" }}
+                  >
+                    Add note
+                  </button>
+                )}
+
+                {app.notes?.length ? (
+                  <details style={{ marginTop: 8 }}>
+                    <summary style={{ cursor: "pointer" }}>View notes</summary>
+                    <ul style={{ marginTop: 6, paddingLeft: 18 }}>
+                      {app.notes
+                        .slice()
+                        .reverse()
+                        .slice(0, 8)
+                        .map((n, idx) => (
+                          <li key={idx} style={{ marginBottom: 4 }}>
+                            {n.text}{" "}
+                            <small style={{ color: "#6b7280" }}>
+                              ({formatNice(n.createdAt)})
+                            </small>
+                          </li>
+                        ))}
+                    </ul>
+                  </details>
+                ) : null}
+              </td>
+            )}
+
+            {/* ADMIN: status dropdown + view */}
             {forRole === "admin" && (
-              <td>
-                <select
-                  value={app.status}
-                  onChange={e => onStatusChange(app._id, e.target.value)}
-                >
-                  <option value="pending">pending</option>
-                  <option value="under_review">under_review</option>
-                  <option value="phone_screen">phone_screen</option>
-                  <option value="technical_interview">technical_interview</option>
-                  <option value="hr_interview">hr_interview</option>
-                  <option value="offer">offer</option>
-                  <option value="rejected">rejected</option>
-                </select>
+              <td style={{ padding: 10, minWidth: 220 }}>
+                <div style={{ display: "grid", gap: 8 }}>
+                  <Link
+                    to={`/admin/applications/${app._id}`}
+                    style={{
+                      textDecoration: "underline",
+                      fontSize: 13,
+                      color: "#111827",
+                    }}
+                  >
+                    Open details
+                  </Link>
+
+                  <select
+                    value={app.status || "pending"}
+                    onChange={(e) => onStatusChange(app._id, e.target.value)}
+                  >
+                    <option value="pending">pending</option>
+                    <option value="under_review">under_review</option>
+                    <option value="phone_screen">phone_screen</option>
+                    <option value="technical_interview">technical_interview</option>
+                    <option value="hr_interview">hr_interview</option>
+                    <option value="offer">offer</option>
+                    <option value="rejected">rejected</option>
+                  </select>
+                </div>
               </td>
             )}
           </tr>
