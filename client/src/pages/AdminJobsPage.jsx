@@ -106,6 +106,7 @@ function AdminJobsPage() {
           border: "1px solid #e5e7eb",
           width: "100%",
           maxWidth: "1000px",
+          overflow: "hidden",
         }}
       >
         <div style={{ marginBottom: "1.5rem" }}>

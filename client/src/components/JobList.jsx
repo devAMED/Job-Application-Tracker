@@ -78,11 +78,33 @@ function JobList({
               </td>
 
               {showActionsFor === "admin" && (
-                <td style={{ padding: "10px" }}>
-                  <button onClick={() => onEdit(job)} style={{ marginRight: 8 }}>
-                    Edit
-                  </button>
-                  <button onClick={() => onDelete(job._id)}>Delete</button>
+              <td style={{ padding: "10px" }}>
+                  <div style={{ display: "inline-flex", gap: 8 }}>
+                    <button
+                      onClick={() => onEdit(job)}
+                      style={{
+                        minWidth: 100,
+                        padding: "8px 12px",
+                        borderRadius: 10,
+                        height: 40,
+                        fontSize: "0.9rem",
+                      }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => onDelete(job._id)}
+                      style={{
+                        minWidth: 100,
+                        padding: "8px 12px",
+                        borderRadius: 10,
+                        height: 40,
+                        fontSize: "0.9rem",
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </td>
               )}
 

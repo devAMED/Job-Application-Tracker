@@ -10,6 +10,7 @@ export default function ApplyFormPage() {
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
 
   // form skeleton state (not submitting yet — teammate 3 will wire API)
   const [fullName, setFullName] = useState("");
@@ -40,6 +41,7 @@ export default function ApplyFormPage() {
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
+    setSuccess(false);
     const formData = new FormData();
     formData.append("fullName", fullName);
     formData.append("phone", phone);
@@ -50,7 +52,8 @@ export default function ApplyFormPage() {
     }
     try {
       await applyToJobWithForm(jobId, formData);
-      navigate("/user/jobs");
+      setSuccess(true);
+      setTimeout(() => navigate("/user/jobs"), 1000);
     } catch (err) {
       console.error(err);
       setError(err?.message || "Failed to submit application");
@@ -88,6 +91,38 @@ export default function ApplyFormPage() {
 
         {loading && <p>Loading job...</p>}
         {error && <p style={{ color: "red" }}>{error}</p>}
+        {success && (
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "10px 12px",
+              background: "#ecfdf3",
+              border: "1px solid #86efac",
+              borderRadius: 12,
+              color: "#166534",
+              fontWeight: 600,
+            }}
+          >
+            <span
+              style={{
+                display: "inline-flex",
+                width: 20,
+                height: 20,
+                borderRadius: "50%",
+                background: "#22c55e",
+                color: "#fff",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 12,
+              }}
+            >
+              ✓
+            </span>
+            Your application has been submitted — good luck!
+          </div>
+        )}
 
         {!loading && !error && (
           <>
