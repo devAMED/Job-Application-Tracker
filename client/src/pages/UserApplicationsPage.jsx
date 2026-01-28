@@ -1,14 +1,57 @@
 // client/src/pages/UserApplicationsPage.jsx
 import React, { useEffect, useState } from "react";
-import {
-  addNoteToApplication,
-  getMyApplications,
-  getMyApplicationsAnalytics,
-  updateApplicationTracking,
-} from "../api/applicationsApi";
-import ApplicationList from "../components/ApplicationList";
+import { Link } from "react-router-dom";
+import { getMyApplications, getMyApplicationsAnalytics } from "../api/applicationsApi";
+import StatusBar from "../components/StatusBar";
 
-function UserApplicationsPage() {
+const STATUS_COLORS = {
+  pending: "gray",
+  under_review: "orange",
+  phone_screen: "slateblue",
+  technical_interview: "purple",
+  hr_interview: "teal",
+  offer: "goldenrod",
+  rejected: "crimson",
+};
+
+const STATUS_LABELS = {
+  pending: "Pending",
+  under_review: "Under Review",
+  phone_screen: "Phone Screen",
+  technical_interview: "Technical Interview",
+  hr_interview: "HR Interview",
+  offer: "Offer",
+  rejected: "Rejected",
+};
+
+function StatusBadge({ status }) {
+  const safe = status || "pending";
+  const bg = STATUS_COLORS[safe] || "gray";
+  const label = STATUS_LABELS[safe] || "Pending";
+
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        padding: "6px 12px",
+        borderRadius: 999,
+        background: bg,
+        color: "white",
+        fontSize: 12,
+        fontWeight: 700,
+      }}
+    >
+      {label}
+    </span>
+  );
+}
+
+function fmt(dt) {
+  if (!dt) return "—";
+  return new Date(dt).toLocaleString();
+}
+
+export default function UserApplicationsPage() {
   const [apps, setApps] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -21,90 +64,69 @@ function UserApplicationsPage() {
   async function load() {
     try {
       setLoading(true);
-      const [data, a] = await Promise.all([
-        getMyApplications(),
-        getMyApplicationsAnalytics(),
-      ]);
-      setApps(data);
-      setAnalytics(a);
       setError("");
-    } catch (err) {
-      console.error(err);
-      setError(err.message || "Failed to load applications");
+      const [a, an] = await Promise.all([getMyApplications(), getMyApplicationsAnalytics()]);
+      setApps(a);
+      setAnalytics(an);
+    } catch (e) {
+      console.error(e);
+      setError(e?.message || "Failed to load applications");
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleUpdateTracking(appId, patch) {
-    try {
-      await updateApplicationTracking(appId, patch);
-      await load();
-    } catch (err) {
-      setError(err.message || "Failed to update tracking");
-    }
-  }
-
-  async function handleAddNote(appId, text) {
-    try {
-      await addNoteToApplication(appId, text);
-      await load();
-    } catch (err) {
-      setError(err.message || "Failed to add note");
-    }
-  }
-
-return (
+  return (
     <div
       style={{
         minHeight: "calc(100vh - 80px)",
         display: "flex",
         justifyContent: "center",
-        alignItems: "flex-start",
         padding: "2.5rem 1.25rem",
       }}
     >
       <div
         style={{
-          background: "#ffffff",
-          borderRadius: "1.1rem",
-          padding: "2rem 2.2rem",
-          boxShadow: "0 22px 45px rgba(15, 23, 42, 0.14)",
-          border: "1px solid #e5e7eb",
           width: "100%",
-          maxWidth: "1000px",
+          maxWidth: 980,
+          background: "#fff",
+          borderRadius: 18,
+          border: "1px solid #e5e7eb",
+          boxShadow: "0 22px 45px rgba(15, 23, 42, 0.14)",
+          padding: "1.75rem 1.75rem",
         }}
       >
-        <h2 style={{ marginBottom: "1rem" }}>My Applications</h2>
+        <h2 style={{ marginTop: 0, marginBottom: 16 }}>My Applications</h2>
 
         {analytics && (
           <div
             style={{
-              marginBottom: "1rem",
+              marginBottom: 16,
               padding: "0.9rem 1rem",
               border: "1px solid #e5e7eb",
-              borderRadius: "0.9rem",
+              borderRadius: 14,
               background: "#fafafa",
               display: "flex",
-              gap: "1rem",
+              gap: 18,
               flexWrap: "wrap",
+              alignItems: "center",
             }}
           >
             <div>
               <div style={{ fontSize: 12, color: "#64748b" }}>Total</div>
-              <div style={{ fontWeight: 700 }}>{analytics.total}</div>
+              <div style={{ fontWeight: 800 }}>{analytics.total ?? 0}</div>
             </div>
+
             <div>
               <div style={{ fontSize: 12, color: "#64748b" }}>Response rate</div>
-              <div style={{ fontWeight: 700 }}>
-                {Math.round(analytics.responseRate || 0)}%
-
-              </div>
+              {/* your backend returns 0..100 already, so don’t multiply */}
+              <div style={{ fontWeight: 800 }}>{analytics.responseRate ?? 0}%</div>
             </div>
+
             <div>
               <div style={{ fontSize: 12, color: "#64748b" }}>Avg response time</div>
-              <div style={{ fontWeight: 700 }}>
-                {analytics.avgResponseTimeDays === null
+              <div style={{ fontWeight: 800 }}>
+                {analytics.avgResponseTimeDays === null || analytics.avgResponseTimeDays === undefined
                   ? "—"
                   : `${analytics.avgResponseTimeDays} days`}
               </div>
@@ -112,26 +134,86 @@ return (
           </div>
         )}
 
-        {error && <p style={{ color: "red" }}>{error}</p>}
+        {error && <p style={{ color: "crimson", marginTop: 0 }}>{error}</p>}
 
         {loading ? (
-          <p>Loading applications...</p>
+          <p>Loading…</p>
+        ) : apps.length === 0 ? (
+          <p>No applications yet.</p>
         ) : (
-         <div style={{ width: "100%", overflowX: "auto" }}>
-  <div style={{ minWidth: 980 }}>
-    <ApplicationList
-      applications={apps}
-      forRole="user"
-      onUpdateTracking={handleUpdateTracking}
-      onAddNote={handleAddNote}
-    />
-  </div>
-</div>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr
+                  style={{
+                    background: "#f8fafc",
+                    borderBottom: "1px solid #e5e7eb",
+                  }}
+                >
+                  <th style={thLeft}>Job</th>
+                  <th style={thLeft}>Status</th>
+                  <th style={thLeft}>Applied At</th>
+                  <th style={thLeft}>Actions</th>
+                </tr>
+              </thead>
 
+              <tbody>
+                {apps.map((app) => (
+                  <tr key={app._id} style={{ borderBottom: "1px solid #eef2f7" }}>
+                    <td style={td}>
+                      <div style={{ fontWeight: 700 }}>{app.job?.title || "—"}</div>
+                      <div style={{ fontSize: 12, opacity: 0.7 }}>{app.job?.company || ""}</div>
+
+                      <div style={{ marginTop: 8 }}>
+                        <Link
+                          to={`/user/applications/${app._id}`}
+                          style={{ textDecoration: "underline", fontSize: 13 }}
+                        >
+                          Open details →
+                        </Link>
+                      </div>
+                    </td>
+
+                    <td style={{ ...td, minWidth: 220 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <StatusBadge status={app.status} />
+                      </div>
+
+                      <div style={{ marginTop: 10 }}>
+                        <StatusBar status={app.status} statusColors={STATUS_COLORS} />
+                      </div>
+                    </td>
+
+                    <td style={td}>{fmt(app.createdAt)}</td>
+
+                    <td style={td}>
+                      {/* quick hint (optional) */}
+                      <div style={{ fontSize: 12, opacity: 0.75 }}>
+                        Interview: {app.interviewAt ? fmt(app.interviewAt) : "—"}
+                      </div>
+                      <div style={{ fontSize: 12, opacity: 0.75 }}>
+                        Location/Link: {app.interviewLocation || app.interviewLink ? "Set" : "—"}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>
   );
 }
 
-export default UserApplicationsPage;
+const thLeft = {
+  textAlign: "left",
+  padding: "12px 12px",
+  fontSize: 13,
+  color: "#0f172a",
+};
+
+const td = {
+  padding: "14px 12px",
+  verticalAlign: "top",
+};
