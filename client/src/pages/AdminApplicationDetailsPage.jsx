@@ -164,7 +164,16 @@ export default function AdminApplicationDetailsPage() {
         {/* Status */}
         <section style={cardStyle}>
           <h3 style={h3Style}>Status</h3>
-          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: 10,
+              alignItems: "center",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              textAlign: "center",
+            }}
+          >
             <select value={status} onChange={(e) => setStatus(e.target.value)}>
               {STATUS_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -176,7 +185,8 @@ export default function AdminApplicationDetailsPage() {
             <button onClick={saveStatus} disabled={saving}>
               Save status
             </button>
-
+          </div>
+          <div style={{ marginTop: 8, textAlign: "center" }}>
             <span style={{ opacity: 0.75, fontSize: 13 }}>
               Response tracking: when leaving “pending”, we record respondedAt for analytics.
             </span>
@@ -230,7 +240,7 @@ export default function AdminApplicationDetailsPage() {
               />
             </label>
 
-            <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
               <button onClick={saveInterview} disabled={saving}>
                 Save interview info
               </button>
@@ -267,9 +277,11 @@ export default function AdminApplicationDetailsPage() {
               placeholder="Add an admin note…"
               style={{ ...inputStyle, minHeight: 80 }}
             />
-            <button onClick={addNote} disabled={saving || !noteText.trim()}>
-              Add note
-            </button>
+            <div style={{ textAlign: "center" }}>
+              <button onClick={addNote} disabled={saving || !noteText.trim()} style={{ minWidth: 140 }}>
+                Add note
+              </button>
+            </div>
           </div>
         </section>
       </div>
