@@ -1,4 +1,7 @@
 const express = require("express");
+const path = require("path");
+const fs = require("fs");
+
 const Application = require("../models/Application");
 const Job = require("../models/Job");
 const authMiddleware = require("../middleware/auth.middleware");
@@ -6,6 +9,24 @@ const adminOnly = require("../middleware/role.middleware");
 const upload = require("../config/upload");
 
 const router = express.Router();
+
+/** Helpers */
+function normalizeLinkedIn(value) {
+  const l = String(value || "").trim();
+  if (!l) return "";
+  if (l.startsWith("http://") || l.startsWith("https://")) return l;
+  return `https://${l}`;
+}
+
+async function populateForAdmin(appId) {
+  return Application.findById(appId)
+    .populate("job")
+    .populate("user", "name email role");
+}
+
+async function populateForUser(appId) {
+  return Application.findById(appId).populate("job");
+}
 
 /**
  * APPLY TO A JOB (User)
@@ -30,18 +51,23 @@ router.post("/:jobId", authMiddleware, upload.single("cv"), async (req, res) => 
       return res.status(400).json({ message: "You have already applied to this job" });
     }
 
+    // Store a WEB-SAFE URL
+    const cvUrl = `/uploads/cv/${req.file.filename}`;
+
     const application = await Application.create({
       job: jobId,
       user: req.user.id,
-      fullName,
-      phone,
-      linkedin: linkedin || "",
-      cvUrl: req.file.path,
-      extraNotes: extraNotes || "",
+      fullName: String(fullName || "").trim(),
+      phone: String(phone || "").trim(),
+      linkedin: normalizeLinkedIn(linkedin),
+      cvUrl,
+      extraNotes: String(extraNotes || ""),
       status: "pending",
     });
 
-    return res.status(201).json({ message: "Application submitted", application });
+    const populated = await populateForUser(application._id);
+
+    return res.status(201).json({ message: "Application submitted", application: populated });
   } catch (error) {
     console.error("POST /api/applications/:jobId error:", error);
     return res.status(500).json({ message: "Failed to submit application" });
@@ -67,14 +93,11 @@ router.get("/my", authMiddleware, async (req, res) => {
 
 /**
  * GET MY APPLICATIONS SUMMARY (User)
- * Used to disable Apply button if already applied
  * GET /api/applications/my/summary
  */
 router.get("/my/summary", authMiddleware, async (req, res) => {
   try {
-    const apps = await Application.find({ user: req.user.id })
-      .select("job status")
-      .lean();
+    const apps = await Application.find({ user: req.user.id }).select("job status").lean();
 
     const summary = apps.map((a) => ({
       jobId: a.job.toString(),
@@ -89,7 +112,7 @@ router.get("/my/summary", authMiddleware, async (req, res) => {
 });
 
 /**
- * ANALYTICS (User) - response rate
+ * ANALYTICS (User)
  * GET /api/applications/my/analytics
  */
 router.get("/my/analytics", authMiddleware, async (req, res) => {
@@ -128,6 +151,55 @@ router.get("/my/analytics", authMiddleware, async (req, res) => {
 });
 
 /**
+ * UPDATE MY APPLICATION (User) - must own it
+ * PUT /api/applications/my/:id
+ * multipart/form-data: fullName, phone, linkedin, extraNotes, cv(optional)
+ */
+router.put("/my/:id", authMiddleware, upload.single("cv"), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const app = await Application.findById(id);
+    if (!app) return res.status(404).json({ message: "Application not found" });
+    if (String(app.user) !== req.user.id) return res.status(403).json({ message: "Not allowed" });
+
+    // Lock edits after final statuses
+    const lockStatuses = ["offer", "rejected"];
+    if (lockStatuses.includes(String(app.status || "").toLowerCase())) {
+      return res.status(400).json({ message: "You cannot edit an application after it is finalized." });
+    }
+
+    const { fullName, phone, linkedin, extraNotes } = req.body;
+
+    // Validation: don’t allow blank required fields
+    if (fullName !== undefined && !String(fullName).trim()) {
+      return res.status(400).json({ message: "Full name cannot be empty" });
+    }
+    if (phone !== undefined && !String(phone).trim()) {
+      return res.status(400).json({ message: "Phone cannot be empty" });
+    }
+
+    if (fullName !== undefined) app.fullName = String(fullName).trim();
+    if (phone !== undefined) app.phone = String(phone).trim();
+    if (linkedin !== undefined) app.linkedin = normalizeLinkedIn(linkedin);
+    if (extraNotes !== undefined) app.extraNotes = String(extraNotes || "");
+
+    // Optional CV replacement
+    if (req.file) {
+      app.cvUrl = `/uploads/cv/${req.file.filename}`;
+    }
+
+    await app.save();
+
+    const populated = await populateForUser(app._id);
+    return res.json({ message: "Application updated", application: populated });
+  } catch (err) {
+    console.error("PUT /api/applications/my/:id error:", err);
+    return res.status(500).json({ message: "Failed to update application" });
+  }
+});
+
+/**
  * GET ONE APPLICATION (User) - must own it
  * GET /api/applications/my/:id
  */
@@ -141,6 +213,29 @@ router.get("/my/:id", authMiddleware, async (req, res) => {
   } catch (err) {
     console.error("GET /api/applications/my/:id error:", err);
     return res.status(500).json({ message: "Failed to load application" });
+  }
+});
+
+/**
+ * USER TRACKING (User) - must own it
+ * PUT /api/applications/:id/tracking
+ */
+router.put("/:id/tracking", authMiddleware, async (req, res) => {
+  try {
+    const { reminderAt, extraNotes } = req.body;
+
+    const app = await Application.findById(req.params.id);
+    if (!app) return res.status(404).json({ message: "Application not found" });
+    if (String(app.user) !== req.user.id) return res.status(403).json({ message: "Not allowed" });
+
+    if (reminderAt !== undefined) app.reminderAt = reminderAt ? new Date(reminderAt) : null;
+    if (extraNotes !== undefined) app.extraNotes = String(extraNotes || "");
+
+    await app.save();
+    return res.json({ message: "Tracking updated", application: app });
+  } catch (err) {
+    console.error("PUT /api/applications/:id/tracking error:", err);
+    return res.status(500).json({ message: "Failed to update tracking" });
   }
 });
 
@@ -163,16 +258,44 @@ router.get("/", authMiddleware, adminOnly, async (req, res) => {
 });
 
 /**
+ * ADMIN-ONLY: VIEW/DOWNLOAD CV
+ * GET /api/applications/:id/cv
+ */
+router.get("/:id/cv", authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const app = await Application.findById(id).select("cvUrl");
+    if (!app) return res.status(404).json({ message: "Application not found" });
+    if (!app.cvUrl) return res.status(404).json({ message: "No CV uploaded" });
+
+    const raw = String(app.cvUrl).replace(/\\/g, "/");
+    const rel = raw.startsWith("/") ? raw.slice(1) : raw; // "uploads/cv/..."
+
+    // routes folder -> server root
+    const serverRoot = path.join(__dirname, ".."); // server/
+    const absPath = path.join(serverRoot, rel);    // server/uploads/cv/...
+
+    if (!fs.existsSync(absPath)) {
+      return res.status(404).json({ message: "CV file not found on server", absPath });
+    }
+
+    return res.sendFile(absPath);
+  } catch (err) {
+    console.error("GET /api/applications/:id/cv error:", err);
+    return res.status(500).json({ message: "Failed to fetch CV" });
+  }
+});
+
+/**
  * GET ONE APPLICATION (Admin)
  * GET /api/applications/:id
  */
 router.get("/:id", authMiddleware, adminOnly, async (req, res) => {
   try {
-    const app = await Application.findById(req.params.id)
-      .populate("job")
-      .populate("user", "name email role");
-
+    const app = await populateForAdmin(req.params.id);
     if (!app) return res.status(404).json({ message: "Application not found" });
+
     return res.json({ application: app });
   } catch (err) {
     console.error("GET /api/applications/:id error:", err);
@@ -198,7 +321,7 @@ router.post("/:id/notes", authMiddleware, async (req, res) => {
     app.notes.push({
       text: String(text).trim(),
       authorRole: "user",
-      authorName: "", // optional
+      authorName: "",
     });
 
     await app.save();
@@ -229,13 +352,13 @@ router.post("/:id/admin/notes", authMiddleware, adminOnly, async (req, res) => {
       authorName: req.user?.name || "",
     });
 
-    // admin interaction counts as a response if not pending
-    if (!app.respondedAt && app.status !== "pending") {
-      app.respondedAt = new Date();
-    }
+    if (!app.respondedAt) app.respondedAt = new Date();
 
     await app.save();
-    return res.json({ message: "Admin note added", application: app });
+
+    // IMPORTANT: return populated so Admin details page doesn't break
+    const populated = await populateForAdmin(app._id);
+    return res.json({ message: "Admin note added", application: populated });
   } catch (err) {
     console.error("POST /api/applications/:id/admin/notes error:", err);
     return res.status(500).json({ message: "Failed to add admin note" });
@@ -289,7 +412,6 @@ router.put("/:id/status", authMiddleware, adminOnly, async (req, res) => {
     const app = await Application.findById(req.params.id);
     if (!app) return res.status(404).json({ message: "Application not found" });
 
-    // response time tracking: first time leaving pending counts as "responded"
     const shouldSetRespondedAt = !app.respondedAt && app.status === "pending" && status !== "pending";
 
     app.status = status;
@@ -297,10 +419,7 @@ router.put("/:id/status", authMiddleware, adminOnly, async (req, res) => {
 
     await app.save();
 
-    const populated = await Application.findById(app._id)
-      .populate("user", "name email")
-      .populate("job");
-
+    const populated = await populateForAdmin(app._id);
     return res.json({ message: "Status updated", application: populated });
   } catch (err) {
     console.error("PUT /api/applications/:id/status error:", err);
@@ -311,7 +430,6 @@ router.put("/:id/status", authMiddleware, adminOnly, async (req, res) => {
 /**
  * SCHEDULE / UPDATE INTERVIEW (Admin)
  * PUT /api/applications/:id/interview
- * body: interviewAt, interviewLocation, interviewLink, interviewNotes
  */
 router.put("/:id/interview", authMiddleware, adminOnly, async (req, res) => {
   try {
@@ -325,13 +443,13 @@ router.put("/:id/interview", authMiddleware, adminOnly, async (req, res) => {
     if (interviewLink !== undefined) app.interviewLink = String(interviewLink || "");
     if (interviewNotes !== undefined) app.interviewNotes = String(interviewNotes || "");
 
-    // Interview scheduling is also a "response" if no response recorded yet and not pending
-    if (!app.respondedAt && app.status !== "pending") {
-      app.respondedAt = new Date();
-    }
+    if (!app.respondedAt) app.respondedAt = new Date();
 
     await app.save();
-    return res.json({ message: "Interview updated", application: app });
+
+    // IMPORTANT: return populated so Admin details page doesn't break
+    const populated = await populateForAdmin(app._id);
+    return res.json({ message: "Interview updated", application: populated });
   } catch (err) {
     console.error("PUT /api/applications/:id/interview error:", err);
     return res.status(500).json({ message: "Failed to update interview" });

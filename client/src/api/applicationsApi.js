@@ -9,15 +9,15 @@ export async function applyToJobWithForm(jobId, formData) {
   });
   return res.data.application;
 }
+
 /**
  * USER: update tracking fields on own application
- * patch can include: { status, interviewAt, reminderAt, extraNotes }
+ * patch can include: { reminderAt, extraNotes }
  */
 export async function updateApplicationTracking(appId, patch) {
   const res = await apiClient.put(`/api/applications/${appId}/tracking`, patch);
   return res.data.application;
 }
-
 
 /**
  * USER: my applications list
@@ -79,7 +79,6 @@ export async function updateApplicationStatus(appId, status) {
  * ADMIN: schedule/update interview
  */
 export async function updateInterviewAdmin(appId, payload) {
-  // payload: { interviewAt, interviewLocation, interviewLink, interviewNotes }
   const res = await apiClient.put(`/api/applications/${appId}/interview`, payload);
   return res.data.application;
 }
@@ -105,5 +104,25 @@ export async function addAdminNoteToApplication(appId, text) {
  */
 export async function setReminder(appId, reminderAt) {
   const res = await apiClient.put(`/api/applications/${appId}/reminder`, { reminderAt });
+  return res.data.application;
+}
+
+/**
+ * ADMIN: fetch CV as blob (works with auth headers)
+ */
+export async function getApplicationCvAdmin(appId) {
+  const res = await apiClient.get(`/api/applications/${appId}/cv`, {
+    responseType: "blob",
+  });
+  return res.data; // Blob
+}
+
+/**
+ * USER: update my application (multipart so we can optionally upload a new CV)
+ */
+export async function updateMyApplicationWithForm(appId, formData) {
+  const res = await apiClient.put(`/api/applications/my/${appId}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return res.data.application;
 }

@@ -5,6 +5,7 @@ import {
   getApplicationByIdAdmin,
   updateApplicationStatus,
   updateInterviewAdmin,
+  getApplicationCvAdmin,
 } from "../api/applicationsApi";
 
 const STATUS_OPTIONS = [
@@ -53,8 +54,6 @@ export default function AdminApplicationDetailsPage() {
       setApp(data);
 
       setStatus(data.status || "pending");
-
-      // convert interviewAt -> datetime-local string
       setInterviewAt(data.interviewAt ? toLocalInputValue(data.interviewAt) : "");
       setInterviewLocation(data.interviewLocation || "");
       setInterviewLink(data.interviewLink || "");
@@ -115,6 +114,25 @@ export default function AdminApplicationDetailsPage() {
     }
   }
 
+  async function handleViewCv() {
+    try {
+      setSaving(true);
+      setError("");
+
+      const blob = await getApplicationCvAdmin(id);
+      const fileURL = window.URL.createObjectURL(blob);
+
+      window.open(fileURL, "_blank", "noopener,noreferrer");
+
+      // cleanup
+      setTimeout(() => window.URL.revokeObjectURL(fileURL), 60_000);
+    } catch (e) {
+      setError(e.message || "Failed to open CV");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   if (loading) return <div style={{ padding: 24 }}>Loading application…</div>;
   if (error) return <div style={{ padding: 24, color: "crimson" }}>{error}</div>;
   if (!app) return <div style={{ padding: 24 }}>Not found.</div>;
@@ -136,9 +154,11 @@ export default function AdminApplicationDetailsPage() {
         {/* Applicant */}
         <section style={cardStyle}>
           <h3 style={h3Style}>Applicant</h3>
+
           <p style={pStyle}><strong>Name:</strong> {app.fullName}</p>
           <p style={pStyle}><strong>Email:</strong> {user?.email || "—"}</p>
           <p style={pStyle}><strong>Phone:</strong> {app.phone}</p>
+
           <p style={pStyle}>
             <strong>LinkedIn:</strong>{" "}
             {app.linkedin ? (
@@ -149,7 +169,19 @@ export default function AdminApplicationDetailsPage() {
               "—"
             )}
           </p>
+
           <p style={pStyle}><strong>Extra Notes:</strong> {app.extraNotes || "—"}</p>
+
+          <p style={pStyle}>
+            <strong>CV:</strong>{" "}
+            {app.cvUrl ? (
+              <button onClick={handleViewCv} disabled={saving}>
+                View CV
+              </button>
+            ) : (
+              "—"
+            )}
+          </p>
         </section>
 
         {/* Job */}
@@ -164,6 +196,7 @@ export default function AdminApplicationDetailsPage() {
         {/* Status */}
         <section style={cardStyle}>
           <h3 style={h3Style}>Status</h3>
+
           <div
             style={{
               display: "flex",
@@ -186,6 +219,7 @@ export default function AdminApplicationDetailsPage() {
               Save status
             </button>
           </div>
+
           <div style={{ marginTop: 8, textAlign: "center" }}>
             <span style={{ opacity: 0.75, fontSize: 13 }}>
               Response tracking: when leaving “pending”, we record respondedAt for analytics.
@@ -193,10 +227,11 @@ export default function AdminApplicationDetailsPage() {
           </div>
         </section>
 
-        {/* Interview scheduling (only show strongly when interview stage, but still editable) */}
+        {/* Interview */}
         <section style={cardStyle}>
           <h3 style={h3Style}>
-            Interview Scheduling {isInterviewStage ? "" : <span style={{ opacity: 0.6 }}>(optional)</span>}
+            Interview Scheduling{" "}
+            {isInterviewStage ? "" : <span style={{ opacity: 0.6 }}>(optional)</span>}
           </h3>
 
           <div style={{ display: "grid", gap: 10 }}>
@@ -251,7 +286,7 @@ export default function AdminApplicationDetailsPage() {
           </div>
         </section>
 
-        {/* Notes thread */}
+        {/* Notes */}
         <section style={cardStyle}>
           <h3 style={h3Style}>Notes</h3>
 

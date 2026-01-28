@@ -1,54 +1,81 @@
 // client/src/App.jsx
-//main app shell with navbar, routing, etc
-import JobDetailsPage from "./pages/JobDetailsPage.jsx";
-import ApplyFormPage from "./pages/ApplyFormPage.jsx";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/useAuth.jsx";
 import Navbar from "./components/Navbar.jsx";
-//auth pages
+
+// Public pages
 import LoginPage from "./pages/LoginPage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
-//admin
+
+// Core pages
+import JobDetailsPage from "./pages/JobDetailsPage.jsx";
+import ApplyFormPage from "./pages/ApplyFormPage.jsx";
+
+// Admin
 import AdminJobsPage from "./pages/AdminJobsPage.jsx";
 import AdminApplicationsPage from "./pages/AdminApplicationsPage.jsx";
-//user
+import AdminApplicationDetailsPage from "./pages/AdminApplicationDetailsPage.jsx";
+
+// User
 import UserJobsPage from "./pages/UserJobsPage.jsx";
 import UserApplicationsPage from "./pages/UserApplicationsPage.jsx";
-import AdminApplicationDetailsPage from "./pages/AdminApplicationDetailsPage";
-import UserApplicationDetailsPage from "./pages/UserApplicationDetailsPage";
+import UserApplicationDetailsPage from "./pages/UserApplicationDetailsPage.jsx";
 
+// New pages (you will add these files below)
+import LandingPage from "./pages/LandingPage.jsx";
+import AboutPage from "./pages/AboutPage.jsx";
+import ContactPage from "./pages/ContactPage.jsx";
 
-//protext the routes so only logged in users can access
+// Protect routes: only logged in users can access
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
-//while restoring from localstorage, show a temp message
-  if (loading) return <p>Loading...</p>;
-  //if not logged in, send to login page
+  if (loading) return <p style={{ padding: 24 }}>Loading...</p>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-//if logged in render the requested page
   return children;
 };
-//this restricts certain routes to specific roles
+
+// Restrict by role
 const RoleRoute = ({ allowedRoles, children }) => {
   const { role } = useAuth();
 
   if (!role || !allowedRoles.includes(role)) {
-    // If user has wrong role, send them to their default home
     if (role === "admin") return <Navigate to="/admin/jobs" replace />;
     if (role === "user") return <Navigate to="/user/jobs" replace />;
     return <Navigate to="/login" replace />;
   }
-//role is allowed render the page
+
   return children;
 };
 
 export default function App() {
+  const { isAuthenticated, role } = useAuth();
+
   return (
     <div>
       <Navbar />
+
       <main style={{ maxWidth: "960px", margin: "0 auto", padding: "1rem" }}>
         <Routes>
-          {/* Public routes */}
+          {/* Landing: if logged in -> go to dashboard */}
+          <Route
+            path="/"
+            element={
+              isAuthenticated ? (
+                <Navigate
+                  to={role === "admin" ? "/admin/jobs" : "/user/jobs"}
+                  replace
+                />
+              ) : (
+                <LandingPage />
+              )
+            }
+          />
+
+          {/* Public static pages */}
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+
+          {/* Auth */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
 
@@ -73,24 +100,24 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/admin/applications/:id"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={["admin"]}>
+                  <AdminApplicationDetailsPage />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
 
           {/* User routes */}
           <Route
             path="/user/jobs"
             element={
               <ProtectedRoute>
-                <RoleRoute allowedRoles={["user", "admin"]}>
+                <RoleRoute allowedRoles={["user"]}>
                   <UserJobsPage />
-                </RoleRoute>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/user/applications"
-            element={
-              <ProtectedRoute>
-                <RoleRoute allowedRoles={["user", "admin"]}>
-                  <UserApplicationsPage />
                 </RoleRoute>
               </ProtectedRoute>
             }
@@ -99,7 +126,7 @@ export default function App() {
             path="/user/jobs/:jobId"
             element={
               <ProtectedRoute>
-                <RoleRoute allowedRoles={["user", "admin"]}>
+                <RoleRoute allowedRoles={["user"]}>
                   <JobDetailsPage />
                 </RoleRoute>
               </ProtectedRoute>
@@ -109,18 +136,35 @@ export default function App() {
             path="/user/jobs/:jobId/apply"
             element={
               <ProtectedRoute>
-                <RoleRoute allowedRoles={["user", "admin"]}>
+                <RoleRoute allowedRoles={["user"]}>
                   <ApplyFormPage />
                 </RoleRoute>
               </ProtectedRoute>
             }
           />
-          <Route path="/admin/applications/:id" element={<AdminApplicationDetailsPage />} />
-          <Route path="/user/applications/:id" element={<UserApplicationDetailsPage />} />
-
+          <Route
+            path="/user/applications"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={["user"]}>
+                  <UserApplicationsPage />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/user/applications/:id"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={["user"]}>
+                  <UserApplicationDetailsPage />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
 
           {/* Default */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
     </div>

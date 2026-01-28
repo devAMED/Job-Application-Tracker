@@ -4,18 +4,30 @@ import {
   addNoteToApplication,
   getMyApplicationById,
   setReminder,
+  updateMyApplicationWithForm,
 } from "../api/applicationsApi";
 
 export default function UserApplicationDetailsPage() {
-  const { id } = useParams(); // application id
+  const { id } = useParams();
 
   const [app, setApp] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  // Reminder + notes
   const [noteText, setNoteText] = useState("");
   const [reminderAt, setReminderAt] = useState("");
+
+  // Edit mode
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Editable fields (draft)
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [linkedin, setLinkedin] = useState("");
+  const [extraNotes, setExtraNotes] = useState("");
+  const [cvFile, setCvFile] = useState(null);
 
   useEffect(() => {
     load();
@@ -28,12 +40,54 @@ export default function UserApplicationDetailsPage() {
       setError("");
       const data = await getMyApplicationById(id);
       setApp(data);
+
       setReminderAt(data.reminderAt ? toLocalInputValue(data.reminderAt) : "");
+
+      // seed edit drafts
+      setFullName(data.fullName || "");
+      setPhone(data.phone || "");
+      setLinkedin(data.linkedin || "");
+      setExtraNotes(data.extraNotes || "");
+      setCvFile(null);
     } catch (e) {
       setError(e.message || "Failed to load application");
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleSaveEdits() {
+    try {
+      setSaving(true);
+      setError("");
+
+      const fd = new FormData();
+      fd.append("fullName", fullName);
+      fd.append("phone", phone);
+      fd.append("linkedin", linkedin);
+      fd.append("extraNotes", extraNotes);
+      if (cvFile) fd.append("cv", cvFile);
+
+      const updated = await updateMyApplicationWithForm(id, fd);
+      setApp(updated);
+
+      setIsEditing(false);
+      setCvFile(null);
+    } catch (e) {
+      setError(e.message || "Failed to update application");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleCancelEdits() {
+    if (!app) return;
+    setFullName(app.fullName || "");
+    setPhone(app.phone || "");
+    setLinkedin(app.linkedin || "");
+    setExtraNotes(app.extraNotes || "");
+    setCvFile(null);
+    setIsEditing(false);
   }
 
   async function addNote() {
@@ -55,7 +109,10 @@ export default function UserApplicationDetailsPage() {
     try {
       setSaving(true);
       setError("");
-      const updated = await setReminder(id, reminderAt ? new Date(reminderAt).toISOString() : null);
+      const updated = await setReminder(
+        id,
+        reminderAt ? new Date(reminderAt).toISOString() : null
+      );
       setApp(updated);
     } catch (e) {
       setError(e.message || "Failed to update reminder");
@@ -76,15 +133,125 @@ export default function UserApplicationDetailsPage() {
         </Link>
       </div>
 
-      <h2 style={{ marginTop: 0 }}>My Application</h2>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+        <h2 style={{ marginTop: 0 }}>My Application</h2>
 
+        {!isEditing ? (
+          <button onClick={() => setIsEditing(true)}>Edit application</button>
+        ) : (
+          <div style={{ display: "flex", gap: 10 }}>
+            <button onClick={handleSaveEdits} disabled={saving}>
+              Save changes
+            </button>
+            <button onClick={handleCancelEdits} style={{ opacity: 0.8 }} disabled={saving}>
+              Cancel
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Status */}
       <section style={cardStyle}>
         <h3 style={h3Style}>Status</h3>
         <p style={{ margin: 0 }}>
           Current status: <strong>{app.status}</strong>
         </p>
+        <p style={{ marginTop: 8, opacity: 0.75, fontSize: 13 }}>
+          Applied at: {new Date(app.createdAt).toLocaleString()}
+        </p>
       </section>
 
+      {/* Edit block */}
+      <section style={cardStyle}>
+        <h3 style={h3Style}>Application Details</h3>
+
+        {!isEditing ? (
+          <>
+            <p style={pStyle}><strong>Full name:</strong> {app.fullName}</p>
+            <p style={pStyle}><strong>Phone:</strong> {app.phone}</p>
+            <p style={pStyle}>
+              <strong>LinkedIn:</strong>{" "}
+              {app.linkedin ? (
+                <a
+                  href={app.linkedin.startsWith("http") ? app.linkedin : `https://${app.linkedin}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {app.linkedin}
+                </a>
+              ) : (
+                "—"
+              )}
+            </p>
+            <p style={pStyle}><strong>Extra notes:</strong> {app.extraNotes || "—"}</p>
+
+            <p style={pStyle}>
+              <strong>CV:</strong>{" "}
+              {app.cvUrl ? (
+                <span style={{ opacity: 0.8 }}>Uploaded</span>
+              ) : (
+                "—"
+              )}
+            </p>
+          </>
+        ) : (
+          <div style={{ display: "grid", gap: 10 }}>
+            <label>
+              Full name
+              <input
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                style={inputStyle}
+              />
+            </label>
+
+            <label>
+              Phone
+              <input
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                style={inputStyle}
+              />
+            </label>
+
+            <label>
+              LinkedIn
+              <input
+                value={linkedin}
+                onChange={(e) => setLinkedin(e.target.value)}
+                placeholder="linkedin.com/in/..."
+                style={inputStyle}
+              />
+            </label>
+
+            <label>
+              Extra notes
+              <textarea
+                value={extraNotes}
+                onChange={(e) => setExtraNotes(e.target.value)}
+                style={{ ...inputStyle, minHeight: 90 }}
+              />
+            </label>
+
+            <label>
+              Replace CV (optional)
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx"
+                onChange={(e) => setCvFile(e.target.files?.[0] || null)}
+                style={inputStyle}
+              />
+              {cvFile && (
+                <div style={{ marginTop: 6, fontSize: 13, opacity: 0.8 }}>
+                  Selected: {cvFile.name}
+                </div>
+              )}
+            </label>
+          </div>
+        )}
+      </section>
+
+      {/* Interview Info */}
       <section style={cardStyle}>
         <h3 style={h3Style}>Interview Info</h3>
 
@@ -115,6 +282,7 @@ export default function UserApplicationDetailsPage() {
         )}
       </section>
 
+      {/* Reminder */}
       <section style={cardStyle}>
         <h3 style={h3Style}>Reminder</h3>
         <label>
@@ -133,13 +301,17 @@ export default function UserApplicationDetailsPage() {
         </div>
       </section>
 
+      {/* Notes */}
       <section style={cardStyle}>
         <h3 style={h3Style}>Notes</h3>
 
         {app.notes?.length ? (
           <div style={{ display: "grid", gap: 10 }}>
             {app.notes.map((n, idx) => (
-              <div key={idx} style={{ padding: 12, border: "1px solid #eee", borderRadius: 10 }}>
+              <div
+                key={idx}
+                style={{ padding: 12, border: "1px solid #eee", borderRadius: 10 }}
+              >
                 <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>
                   {n.authorRole?.toUpperCase()} • {new Date(n.createdAt).toLocaleString()}
                 </div>
