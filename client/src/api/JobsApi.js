@@ -22,7 +22,7 @@ export async function getJobs(filters = {}) {
   }
 }
 
-// job details
+// job details, fetching a single job
 export async function getJobById(id) {
   try {
     const res = await apiClient.get(`/api/jobs/${id}`);

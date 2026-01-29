@@ -124,10 +124,6 @@ export default function JobDetailsPage() {
               </button>
             </div>
 
-            <div style={{ marginTop: "1.25rem", fontSize: "0.9rem", opacity: 0.7 }}>
-              (Teammate 3 will enhance this page later with richer fields like salary,
-              requirements, and extra sections.)
-            </div>
           </>
         )}
       </div>

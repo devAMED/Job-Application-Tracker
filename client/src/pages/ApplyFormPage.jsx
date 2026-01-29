@@ -12,7 +12,7 @@ export default function ApplyFormPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  // form skeleton state (not submitting yet — teammate 3 will wire API)
+  // form skeleton state 
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [linkedin, setLinkedin] = useState("");
