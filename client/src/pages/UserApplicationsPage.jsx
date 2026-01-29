@@ -99,36 +99,28 @@ export default function UserApplicationsPage() {
         <h2 style={{ marginTop: 0, marginBottom: 16 }}>My Applications</h2>
 
         {analytics && (
-          <div
-            style={{
-              marginBottom: 16,
-              padding: "0.9rem 1rem",
-              border: "1px solid #e5e7eb",
-              borderRadius: 14,
-              background: "#fafafa",
-              display: "flex",
-              gap: 18,
-              flexWrap: "wrap",
-              alignItems: "center",
-            }}
-          >
-            <div>
-              <div style={{ fontSize: 12, color: "#64748b" }}>Total</div>
-              <div style={{ fontWeight: 800 }}>{analytics.total ?? 0}</div>
-            </div>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+            <div
+              style={{
+                padding: "0.9rem 1rem",
+                border: "1px solid #e5e7eb",
+                borderRadius: 14,
+                background: "#fafafa",
+                display: "flex",
+                gap: 18,
+                flexWrap: "wrap",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: 12, color: "#64748b" }}>Total</div>
+                <div style={{ fontWeight: 800 }}>{analytics.total ?? 0}</div>
+              </div>
 
-            <div>
-              <div style={{ fontSize: 12, color: "#64748b" }}>Response rate</div>
-              {/* your backend returns 0..100 already, so don’t multiply */}
-              <div style={{ fontWeight: 800 }}>{analytics.responseRate ?? 0}%</div>
-            </div>
-
-            <div>
-              <div style={{ fontSize: 12, color: "#64748b" }}>Avg response time</div>
-              <div style={{ fontWeight: 800 }}>
-                {analytics.avgResponseTimeDays === null || analytics.avgResponseTimeDays === undefined
-                  ? "—"
-                  : `${analytics.avgResponseTimeDays} days`}
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: 12, color: "#64748b" }}>Response rate</div>
+                <div style={{ fontWeight: 800 }}>{analytics.responseRate ?? 0}%</div>
               </div>
             </div>
           </div>
